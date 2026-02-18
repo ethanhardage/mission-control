@@ -1,160 +1,150 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Croati Mission Control</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Croati Mission Control</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .today-card { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); }
+    .today-header { display: flex; justify-content: space-between; align-items: center; }
+    .today-date { font-size: 14px; color: #888; }
+    .class-item { display: flex; align-items: center; gap: 12px; padding: 10px; border-radius: 6px; margin: 6px 0; background: rgba(255,107,0,0.1); border-left: 3px solid #ff6b00; }
+    .class-time { font-family: monospace; font-size: 13px; color: #ff6b00; }
+    .class-name { font-weight: 500; }
+    .assignment-item { display: flex; align-items: center; gap: 8px; padding: 8px; margin: 4px 0; background: rgba(255,0,0,0.1); border-radius: 4px; border-left: 3px solid #ef4444; }
+    .assignment-item.done { background: rgba(34,197,94,0.1); border-left-color: #22c55e; }
+    .assignment-item.in-progress { background: rgba(59,130,246,0.1); border-left-color: #3b82f6; }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .status-dot.urgent { background: #ef4444; animation: pulse 1.5s infinite; }
+    .status-dot.not-started { background: #f59e0b; }
+    .status-dot.in-progress { background: #3b82f6; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+  </style>
 </head>
 <body>
-    <header class="header">
-        <div class="header-brand">
-            <span class="lobster-icon">🦞</span>
-            <h1>CROATI MISSION CONTROL</h1>
-            <span class="live-badge">LIVE</span>
-        </div>
-        <div class="header-actions">
-            <button class="btn btn-secondary" onclick="refreshAll()">🔄 Refresh</button>
-            <button class="btn" onclick="spawnAgent()">+ Spawn Agent</button>
-        </div>
-    </header>
+  <header class="header">
+    <div class="header-brand">
+      <span class="lobster-icon">🦞</span>
+      <h1>CROATI MISSION CONTROL</h1>
+      <span class="live-badge">LIVE</span>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-secondary" onclick="refreshAll()">🔄 Refresh</button>
+      <button class="btn" onclick="spawnAgent()">+ Spawn Agent</button>
+    </div>
+  </header>
 
-    <nav class="nav">
-        <ul>
-            <li><a href="index.html" class="active">Dashboard</a></li>
-            <li><a href="agents.html">Agents</a></li>
-            <li><a href="crons.html">Cron Jobs</a></li>
-            <li><a href="missions.html">Mission Log</a></li>
-        </ul>
-    </nav>
+  <nav class="nav">
+    <ul>
+      <li><a href="index.html" class="active">Dashboard</a></li>
+      <li><a href="agents.html">Agents</a></li>
+      <li><a href="crons.html">Cron Jobs</a></li>
+      <li><a href="missions.html">Mission Log</a></li>
+    </ul>
+  </nav>
 
-    <main class="dashboard">
-        <!-- Active Agents -->
-        <div class="card">
-            <div class="card-header">
-                <h2><span>👥</span> ACTIVE AGENTS</h2>
-                <span id="agent-count">Loading...</span>
-            </div>
-            <div class="card-body">
-                <div id="active-agents-list">
-                    <p class="placeholder">Loading agents...</p>
-                </div>
-            </div>
+  <main class="dashboard">
+    <!-- TODAY'S CLASSES -->
+    <div class="card today-card">
+      <div class="card-header today-header">
+        <h2><span>📚</span> TODAY'S CLASSES</h2>
+        <span class="today-date" id="today-date">Loading...</span>
+      </div>
+      <div class="card-body">
+        <div id="today-classes">
+          <p class="placeholder">Loading schedule...</p>
         </div>
-
-        <!-- Mission Pipeline Stats -->
-        <div class="card">
-            <div class="card-header">
-                <h2><span>📊</span> MISSION PIPELINE</h2>
-            </div>
-            <div class="card-body">
-                <div class="pipeline-stats">
-                    <div class="stat-item">
-                        <div class="stat-number" id="stat-running">-</div>
-                        <div class="stat-label">Running</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-number" id="stat-completed">-</div>
-                        <div class="stat-label">Completed</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-number" id="stat-idle">-</div>
-                        <div class="stat-label">Idle</div>
-                    </div>
-                </div>
-            </div>
+        <div style="margin-top:16px;padding-top:16px;border-top:1px solid #333">
+          <h4 style="color:#888;margin:0 0 8px 0">📋 Due Today</h4>
+          <div id="today-assignments">
+            <p class="placeholder">No assignments due</p>
+          </div>
         </div>
+      </div>
+    </div>
 
-        <!-- Quick Actions -->
-        <div class="card">
-            <div class="card-header">
-                <h2><span>⚡</span> QUICK ACTIONS</h2>
-            </div>
-            <div class="card-body">
-                <div class="action-grid">
-                    <button class="action-btn" onclick="quickAction('weather')">
-                        <span>🌤️</span>
-                        Check Weather
-                    </button>
-                    <button class="action-btn" onclick="quickAction('notion')">
-                        <span>📝</span>
-                        Check Notion
-                    </button>
-                    <button class="action-btn" onclick="quickAction('cron')">
-                        <span>⏰</span>
-                        Trigger Cron
-                    </button>
-                    <button class="action-btn" onclick="quickAction('tts')">
-                        <span>🔊</span>
-                        Run TTS
-                    </button>
-                    <button class="action-btn" onclick="quickAction('kill-all')">
-                        <span>🛑</span>
-                        Kill All
-                    </button>
-                    <button class="action-btn" onclick="quickAction('browser')">
-                        <span>🌐</span>
-                        Open Browser
-                    </button>
-                </div>
-            </div>
+    <!-- Active Agents -->
+    <div class="card">
+      <div class="card-header">
+        <h2><span>👥</span> ACTIVE AGENTS</h2>
+        <span id="agent-count">Loading...</span>
+      </div>
+      <div class="card-body">
+        <div id="active-agents-list">
+          <p class="placeholder">Loading agents...</p>
         </div>
+      </div>
+    </div>
 
-        <!-- System Health -->
-        <div class="card">
-            <div class="card-header">
-                <h2><span>📊</span> SYSTEM HEALTH</h2>
-            </div>
-            <div class="card-body">
-                <div class="health-grid">
-                    <div class="health-card healthy" id="health-gateway">
-                        <h4>🚀 Gateway</h4>
-                        <span class="status">Healthy</span>
-                        <span class="metric">23ms</span>
-                    </div>
-                    <div class="health-card healthy" id="health-kimi">
-                        <h4>🎭 Kimi API</h4>
-                        <span class="status">Connected</span>
-                        <span class="metric">45ms</span>
-                    </div>
-                    <div class="health-card healthy" id="health-github">
-                        <h4>🐙 GitHub</h4>
-                        <span class="status">Connected</span>
-                        <span class="metric">ethanhardage</span>
-                    </div>
-                    <div class="health-card healthy" id="health-notion">
-                        <h4>📓 Notion</h4>
-                        <span class="status">Connected</span>
-                        <span class="metric">3 tasks</span>
-                    </div>
-                </div>
-            </div>
+    <!-- Mission Pipeline Stats -->
+    <div class="card">
+      <div class="card-header">
+        <h2><span>📊</span> MISSION PIPELINE</h2>
+      </div>
+      <div class="card-body">
+        <div class="pipeline-stats">
+          <div class="stat-item">
+            <div class="stat-number" id="stat-running">-</div>
+            <div class="stat-label">Running</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number" id="stat-completed">-</div>
+            <div class="stat-label">Completed</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number" id="stat-idle">-</div>
+            <div class="stat-label">Idle</div>
+          </div>
         </div>
+      </div>
+    </div>
 
-        <!-- Recent Events -->
-        <div class="card section-full">
-            <div class="card-header">
-                <h2><span>📜</span> RECENT EVENTS</h2>
-            </div>
-            <div class="card-body">
-                <div class="events-list" id="events-list">
-                    <div class="event-item">
-                        <span class="event-time">22:48</span>
-                        <span class="event-message">✅ Mission Control API deployed</span>
-                    </div>
-                    <div class="event-item">
-                        <span class="event-time">22:35</span>
-                        <span class="event-message">✅ Backend server built</span>
-                    </div>
-                    <div class="event-item">
-                        <span class="event-time">22:30</span>
-                        <span class="event-message">✅ Frontend API client ready</span>
-                    </div>
-                </div>
-            </div>
+    <!-- Quick Actions -->
+    <div class="card">
+      <div class="card-header">
+        <h2><span>⚡</span> QUICK ACTIONS</h2>
+      </div>
+      <div class="card-body">
+        <div class="action-grid">
+          <button class="action-btn" onclick="quickAction('weather')">
+            <span>🌤️</span> Check Weather
+          </button>
+          <button class="action-btn" onclick="quickAction('notion')">
+            <span>📝</span> Check Notion
+          </button>
+          <button class="action-btn" onclick="quickAction('cron')">
+            <span>⏰</span> Trigger Cron
+          </button>
+          <button class="action-btn" onclick="quickAction('tts')">
+            <span>🔊</span> Run TTS
+          </button>
+          <button class="action-btn" onclick="quickAction('kill-all')">
+            <span>🛑</span> Kill All
+          </button>
+          <button class="action-btn" onclick="quickAction('browser')">
+            <span>🌐</span> Open Browser
+          </button>
         </div>
-    </main>
+      </div>
+    </div>
 
-    <script src="api-client.js"></script>
+    <!-- Recent Events -->
+    <div class="card section-full">
+      <div class="card-header">
+        <h2><span>📜</span> RECENT EVENTS</h2>
+      </div>
+      <div class="card-body">
+        <div class="events-list" id="events-list">
+          <div class="event-item">
+            <span class="event-time">--:--</span>
+            <span class="event-message">Mission Control initialized</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="api-client.js"></script>
 </body>
 </html>

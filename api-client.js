@@ -26,6 +26,49 @@ function viewSession(id) {
   window.location.href = `session.html?id=${id}`;
 }
 
+async function loadToday() {
+  const data = await apiCall('/today');
+  
+  // Update date
+  const dateEl = document.getElementById('today-date');
+  if (dateEl) dateEl.textContent = data.fullDay + ' ' + data.date;
+  
+  // Update classes
+  const classesContainer = document.getElementById('today-classes');
+  if (classesContainer) {
+    if (data.classes?.length) {
+      classesContainer.innerHTML = data.classes.map(c => `
+        <div class="class-item" style="border-left-color:${c.color}">
+          <span class="class-time">${c.time}</span>
+          <span class="class-name">${c.class}</span>
+        </div>
+      `).join('');
+    } else {
+      classesContainer.innerHTML = '<p class="placeholder">No classes today 🎉</p>';
+    }
+  }
+  
+  // Update assignments
+  const assignContainer = document.getElementById('today-assignments');
+  if (assignContainer) {
+    if (data.assignments?.length) {
+      assignContainer.innerHTML = data.assignments.map(a => `
+        <div class="assignment-item ${a.status}">
+          <span class="status-dot ${a.urgent ? 'urgent' : a.status}"></span>
+          <span>${a.task}</span>
+          <span style="color:#888;font-size:12px;margin-left:auto">${a.due}</span>
+        </div>
+      `).join('');
+    } else {
+      assignContainer.innerHTML = '<p class="placeholder" style="color:#22c55e">All caught up! ✅</p>';
+    }
+  }
+  
+  // Update urgent count in pipeline
+  const urgentEl = document.getElementById('stat-completed');
+  if (urgentEl) urgentEl.textContent = data.urgentCount || '-';
+}
+
 async function loadAgents() {
   const data = await apiCall('/sessions');
   const container = document.getElementById('active-agents') || document.getElementById('active-agents-list');
@@ -162,9 +205,10 @@ function refreshAll() {
 }
 
 function initMissionControl() {
+  loadToday();
   loadAgents();
   loadCrons();
-  setInterval(() => { loadAgents(); loadCrons(); }, 30000);
+  setInterval(() => { loadToday(); loadAgents(); loadCrons(); }, 30000);
   
   window.spawnAgent = spawnAgent;
   window.spawnNewAgent = spawnNewAgent;

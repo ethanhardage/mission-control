@@ -152,6 +152,55 @@ app.post('/api/agents/:id/kill', (req, res) => {
   res.json({ success: true, message: 'Kill sent' });
 });
 
+// Get today's classes and assignments
+app.get('/api/today', (req, res) => {
+  const day = new Date().getDay();
+  const dow = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][day];
+  
+  // Static schedule from class-schedule.md
+  const schedule = {
+    'Mon': [
+      { time: '9:30-10:45', class: 'OM 375', color: '#ff6b00' },
+      { time: '11:00-11:50', class: 'GBA 346', color: '#22c55e' },
+      { time: '12:00-12:50', class: 'MIS 520', color: '#3b82f6' },
+      { time: '2:00-3:15', class: 'MIS 505', color: '#a78bfa' }
+    ],
+    'Tue': [{ time: '2:00-3:15', class: 'OM 300', color: '#ef4444' }],
+    'Wed': [
+      { time: '9:30-10:45', class: 'OM 375', color: '#ff6b00' },
+      { time: '12:00-12:50', class: 'MIS 520', color: '#3b82f6' },
+      { time: '2:00-3:15', class: 'MIS 505', color: '#a78bfa' }
+    ],
+    'Thu': [{ time: '2:00-3:15', class: 'OM 300', color: '#ef4444' }],
+    'Fri': [],
+    'Sat': [],
+    'Sun': []
+  };
+  
+  // Demo assignments data
+  const assignments = {
+    'Mon': [
+      { task: 'OM 375 Homework #3', due: 'Tomorrow', status: 'not-started', urgent: true },
+      { task: 'MIS 520 Presentation', due: 'Tomorrow', status: 'in-progress', urgent: false }
+    ],
+    'Tue': [{ task: 'OM 300 Reading', due: 'Thu', status: 'not-started', urgent: false }],
+    'Wed': [{ task: 'MIS 505 Lab', due: 'Wed', status: 'in-progress', urgent: false }],
+    'Thu': [{ task: 'OM 300 Quiz', due: 'Thu', status: 'not-started', urgent: true }],
+    'Fri': [],
+    'Sat': [],
+    'Sun': []
+  };
+  
+  res.json({
+    day: dow,
+    fullDay: ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][day],
+    date: new Date().toLocaleDateString(),
+    classes: schedule[dow] || [],
+    assignments: assignments[dow] || [],
+    urgentCount: (assignments[dow] || []).filter(a => a.urgent).length
+  });
+});
+
 app.get('/api/status', (req, res) => res.json({
   timestamp: new Date().toISOString(),
   gateway: { status: 'healthy' },
