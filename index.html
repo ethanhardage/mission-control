@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Croati Mission Control</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="header-brand">
+            <span class="lobster-icon">🦞</span>
+            <h1>CROATI MISSION CONTROL</h1>
+            <span class="live-badge">LIVE</span>
+        </div>
+        <div class="header-actions">
+            <button class="btn btn-secondary" onclick="refreshAll()">🔄 Refresh</button>
+            <button class="btn" onclick="spawnAgent()">+ Spawn Agent</button>
+        </div>
+    </header>
+
+    <nav class="nav">
+        <ul>
+            <li><a href="index.html" class="active">Dashboard</a></li>
+            <li><a href="agents.html">Agents</a></li>
+            <li><a href="crons.html">Cron Jobs</a></li>
+            <li><a href="missions.html">Mission Log</a></li>
+        </ul>
+    </nav>
+
+    <main class="dashboard">
+        <!-- Agent Swarm -->
+        <div class="card">
+            <div class="card-header">
+                <h2><span>👥</span> AGENT SWARM</h2>
+                <span class="status-badge status-active">Active</span>
+            </div>
+            <div class="card-body">
+                <div class="agent-list" id="agent-list">
+                    <div class="agent-item">
+                        <div class="agent-info">
+                            <div class="agent-name">🟢 Croati (Main)</div>
+                            <div class="agent-task">Status: Active — Building Mission Control</div>
+                        </div>
+                        <div class="agent-actions">
+                            <button class="btn btn-secondary">View</button>
+                        </div>
+                    </div>
+                    <div class="agent-item">
+                        <div class="agent-info">
+                            <div class="agent-name">🟡 Subagent-xyz</div>
+                            <div class="agent-task">Task: Research — 2m runtime</div>
+                        </div>
+                        <div class="agent-actions">
+                            <button class="btn btn-secondary">View</button>
+                            <button class="btn btn-danger">Kill</button>
+                        </div>
+                    </div>
+                    <div class="agent-item">
+                        <div class="agent-info">
+                            <div class="agent-name">🔵 Subagent-abc</div>
+                            <div class="agent-task">Task: Code Build — 5m runtime</div>
+                        </div>
+                        <div class="agent-actions">
+                            <button class="btn btn-secondary">View</button>
+                            <button class="btn btn-danger">Kill</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mission Pipeline -->
+        <div class="card">
+            <div class="card-header">
+                <h2><span>📅</span> MISSION PIPELINE</h2>
+                <span class="status-badge status-active">Running: 3</span>
+            </div>
+            <div class="card-body">
+                <div class="pipeline-stats">
+                    <div class="stat-item">
+                        <div class="stat-number" id="running-count">3</div>
+                        <div class="stat-label">Running</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="completed-count">47</div>
+                        <div class="stat-label">Done</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="idle-count">2</div>
+                        <div class="stat-label">Idle</div>
+                    </div>
+                </div>
+                <div class="mission-list" id="mission-list">
+                    <div class="mission-item running">
+                        <span class="mission-name">Morning Briefing Optimization</span>
+                        <span class="mission-progress">▓▓▓▓▓▓▓▓▓░ 90%</span>
+                    </div>
+                    <div class="mission-item running">
+                        <span class="mission-name">Mission Control Dashboard Build</span>
+                        <span class="mission-progress">▓▓▓▓▓░ 40%</span>
+                    </div>
+                    <div class="mission-item running">
+                        <span class="mission-name">Claude Code Auth Test</span>
+                        <span class="mission-progress">▓▓▓▓▓▓▓▓░░ 80%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card">
+            <div class="card-header">
+                <h2><span>⚡</span> QUICK ACTIONS</h2>
+            </div>
+            <div class="card-body">
+                <div class="action-grid">
+                    <button class="action-btn" onclick="quickAction('weather')">
+                        <span>🌤️</span>
+                        Weather Check
+                    </button>
+                    <button class="action-btn" onclick="quickAction('notion')">
+                        <span>📝</span>
+                        Pull Notion
+                    </button>
+                    <button class="action-btn" onclick="quickAction('cron')">
+                        <span>🔔</span>
+                        Run Cron Now
+                    </button>
+                    <button class="action-btn" onclick="quickAction('workspace')">
+                        <span>📁</span>
+                        View Workspace
+                    </button>
+                    <button class="action-btn" onclick="quickAction('browser')">
+                        <span>🌐</span>
+                        Test Browser
+                    </button>
+                    <button class="action-btn" onclick="quickAction('tts')">
+                        <span>🎙️</span>
+                        Test TTS
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Health -->
+        <div class="card">
+            <div class="card-header">
+                <h2><span>📊</span> SYSTEM HEALTH</h2>
+            </div>
+            <div class="card-body">
+                <div class="health-grid" id="health-grid">
+                    <div class="health-item">
+                        <div class="health-service">
+                            <span>🟢</span>
+                            <span class="health-name">OpenClaw Gateway</span>
+                        </div>
+                        <span class="health-metric">23ms • 0.3% CPU</span>
+                    </div>
+                    <div class="health-item">
+                        <div class="health-service">
+                            <span>🟢</span>
+                            <span class="health-name">Kimi API</span>
+                        </div>
+                        <span class="health-metric">45ms • 2.1% RAM</span>
+                    </div>
+                    <div class="health-item">
+                        <div class="health-service">
+                            <span>🟡</span>
+                            <span class="health-name">Claude Code</span>
+                        </div>
+                        <span class="health-metric">Not Authed (Interactive)</span>
+                    </div>
+                    <div                    <div class="health-item">
+                        <div class="health-service">
+                            <span>🟢</span>
+                            <span class="health-name">GitHub</span>
+                        </div>
+                        <span class="health-metric">Connected (ethanhardage)</span>
+                    </div>
+                    <div class="health-item">
+                        <div class="health-service">
+                            <span>🟢</span>
+                            <span class="health-name">Notion</span>
+                        </div>
+                        <span class="health-metric">3 tasks synced</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Events -->
+        <div class="card section-full">
+            <div class="card-header">
+                <h2><span>📜</span> RECENT EVENTS</h2>
+                <button class="btn btn-secondary" onclick="clearEvents()">Clear</button>
+            </div>
+            <div class="card-body">
+                <div class="events-list" id="events-list">
+                    <div class="event-item">
+                        <span class="event-time">15:42</span>
+                        <span class="event-message">Agent <strong>Subagent-xyz</strong> spawned for research task</span>
+                    </div>
+                    <div class="event-item">
+                        <span class="event-time">15:30</span>
+                        <span class="event-message">Cron <strong>Morning Briefing</strong> completed successfully</span>
+                    </div>
+                    <div class="event-item">
+                        <span class="event-time">15:22</span>
+                        <span class="event-message">Agent <strong>Subagent-xyz</strong> completed — found 3 Notion tasks</span>
+                    </div>
+                    <div class="event-item">
+                        <span class="event-time">15:15</span>
+                        <span class="event-message">GitHub connected to account <strong>ethanhardage</strong></span>
+                    </div>
+                    <div class="event-item">
+                        <span class="event-time">15:10</span>
+                        <span class="event-message">System restart: OpenClaw Gateway initialized</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div class="refresh-indicator" id="refresh-indicator">
+        Last updated: <span id="last-updated">Just now</span> • Auto-refresh: ON
+    </div>
+
+    <script>
+        setInterval(refreshAll, 30000);
+
+        function refreshAll() {
+            document.getElementById('last-updated').textContent = new Date().toLocaleTimeString();
+            console.log('Dashboard refreshed');
+        }
+
+        function spawnAgent() {
+            const task = prompt('What should the new agent do?');
+            if (task) alert('Spawning agent for: ' + task);
+        }
+
+        function quickAction(action) {
+            const actions = {
+                'weather': 'Checking Tuscaloosa weather...',
+                'notion': 'Pulling Notion tasks...',
+                'cron': 'Triggering cron job...',
+                'workspace': 'Opening workspace view...',
+                'browser': 'Testing browser...',
+                'tts': 'Testing TTS...'
+            };
+            alert(actions[action] || 'Running action...');
+        }
+
+        function clearEvents() {
+            document.getElementById('events-list').innerHTML = '<div class="event-item"><span class="event-time">--:--</span><span class="event-message">Events cleared</span></div>';
+        }
+
+        refreshAll();
+    </script>
+</body>
+</html>

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mission Log | Croati Mission Control</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="header-brand">
+            <span class="lobster-icon">🦞</span>
+            <h1>CROATI MISSION CONTROL</h1>
+            <span class="live-badge">LIVE</span>
+        </div>
+        <div class="header-actions">
+            <button class="btn btn-secondary" onclick="refreshAll()">🔄 Refresh</button>
+            <button class="btn btn-secondary" onclick="exportLog()">📤 Export</button>
+        </div>
+    </header>
+
+    <nav class="nav">
+        <ul>
+            <li><a href="index.html">Dashboard</a></li>
+            <li><a href="agents.html">Agents</a></li>
+            <li><a href="crons.html">Cron Jobs</a></li>
+            <li><a href="missions.html" class="active">Mission Log</a></li>
+        </ul>
+    </nav>
+
+    <main class="dashboard">
+        <!-- Stats -->
+        <div class="card">
+            <div class="card-header">
+                <h2><span>📊</span> MISSION STATISTICS</h2>
+            </div>
+            <div class="card-body">
+                <div class="pipeline-stats">
+                    <div class="stat-item">
+                        <div class="stat-number">47</div>
+                        <div class="stat-label">Completed</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">1</div>
+                        <div class="stat-label">Running</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">2</div>
+                        <div class="stat-label">Failed</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">99.1%</div>
+                        <div class="stat-label">Success Rate</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mission Log -->
+        <div class="card section-full">
+            <div class="card-header">
+                <h2><span>📜</span> MISSION LOG</h2>
+                <div>
+                    <button class="btn btn-secondary" onclick="filterLog('all')">All</button>
+                    <button class="btn btn-secondary" onclick="filterLog('success')">Success</button>
+                    <button class="btn btn-secondary" onclick="filterLog('failed')">Failed</button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="events-list" id="missions-list">
+                    <div class="event-item">
+                        <span class="event-time">16:35</span>
+                        <span class="event-message">✅ <strong>Mission Control Build</strong> completed successfully (Dashboard v1.0)</span>
+                    </div>
+                    <div class="event-item">
+                        <span class="event-time">16:30</span>
+                        <span class="event-message">✅ <strong>Claude Code</strong> authenticated and working</span>
+                    </div>
+                    <div class="event-item">
+                        <span class="event-time">15:42</span>
+                        <span class="event-message">✅ <strong>Subagent-xyz</strong> research task completed (Kimi Code pricing)</span>
+                    </div>
+                    <div class="event-item">
+                        <span class="event-time">15:30</span>
+                        <span class="event-message">✅ <strong>Cron: Morning Briefing</strong> delivered via Telegram</span>
+                    </div>
+                    <div class="event-item">
+                        <span class="event-time">15:22</span>
+                        <span class="event-message">✅ <strong>Notion Sync</strong> found 3 assignments due today/tomorrow</span>
+                    </div>
+                    <div class="event-item">
+                        <span class="event-time">15:15</span>
+                        <span class="event-message">✅ <strong>GitHub</strong> connected (ethanhardage)</span>
+                    </div>
+                    <div class="event-item">
+                        <span class="event-time">15:10</span>
+                        <span class="event-message">🔄 <strong>System Restart</strong> OpenClaw Gateway initialized</span>
+                    </div>
+                    <div class="event-item">
+                        <span class="event-time">14:45</span>
+                        <span class="event-message">✅ <strong>Kimi Code</strong> installed (v1.12.0)</span>
+                    </div>
+                    <div class="event-item">
+                        <span class="event-time">14:30</span>
+                        <span class="event-message">✅ <strong>Claude Code</strong> installed (v2.1.45)</span>
+                    </div>
+                    <div class="event-item">
+                        <span class="event-time">14:20</span>
+                        <span class="event-message">✅ <strong>Browser Automation</strong> Chromium tested and working</span>
+                    </div>
+                    <div class="event-item">
+                        <span class="event-time">14:15</span>
+                        <span class="event-message">✅ <strong>Morning Briefing</strong> optimized (sub-60s runtime)</span>
+                    </div>
+                    <div class="event-item">
+                        <span class="event-time">14:08</span>
+                        <span class="event-message">✅ <strong>Evening Prep</strong> cron job created (8:00 PM daily)</span>
+                    </div>
+                    <div class="event-item">
+                        <span class="event-time">14:00</span>
+                        <span class="event-message">✅ <strong>Model Switched</strong> to Kimi (nvidia-nim/moonshotai/kimi-k2.5)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function refreshAll() {
+            location.reload();
+        }
+
+        function exportLog() {
+            alert('📤 Exporting mission log...\n\n' +
+                'This would download a JSON/CSV of all missions.');
+        }
+
+        function filterLog(type) {
+            alert('🔍 Filtering by: ' + type);
+            // Would filter the list in real implementation
+        }
+    </script>
+</body>
+</html>

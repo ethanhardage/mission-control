@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cron Jobs | Croati Mission Control</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="header-brand">
+            <span class="lobster-icon">🦞</span>
+            <h1>CROATI MISSION CONTROL</h1>
+            <span class="live-badge">LIVE</span>
+        </div>
+        <div class="header-actions">
+            <button class="btn btn-secondary" onclick="refreshAll()">🔄 Refresh</button>
+            <button class="btn" onclick="addCron()">+ Add Cron Job</button>
+        </div>
+    </header>
+
+    <nav class="nav">
+        <ul>
+            <li><a href="index.html">Dashboard</a></li>
+            <li><a href="agents.html">Agents</a></li>
+            <li><a href="crons.html" class="active">Cron Jobs</a></li>
+            <li><a href="missions.html">Mission Log</a></li>
+        </ul>
+    </nav>
+
+    <main class="dashboard">
+        <!-- Cron Overview -->
+        <div class="card">
+            <div class="card-header">
+                <h2><span>📊</span> CRON OVERVIEW</h2>
+            </div>
+            <div class="card-body">
+                <div class="pipeline-stats">
+                    <div class="stat-item">
+                        <div class="stat-number">2</div>
+                        <div class="stat-label">Active Jobs</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">0</div>
+                        <div class="stat-label">Disabled</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">0</div>
+                        <div class="stat-label">Failed (24h)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Cron Jobs -->
+        <div class="card">
+            <div class="card-header">
+                <h2><span>⏰</span> ACTIVE CRON JOBS</h2>
+            </div>
+            <div class="card-body">
+                <div class="mission-list">
+                    <div class="mission-item queued">
+                        <span class="mission-name">
+                            <strong>Morning Briefing for Ethan</strong><br>
+                            <small>Daily weather, assignments, news briefing</small>
+                        </span>
+                        <span class="mission-progress">
+                            ✅ Enabled<br>
+                            <small>Next: Tomorrow 7:30 AM CT</small><br>
+                            <small>ID: bb0fb60e-...-1f8e84</small>
+                        </span>
+                    </div>
+                    <div class="mission-item queued">
+                        <span class="mission-name">
+                            <strong>Evening Prep for Ethan</strong><br>
+                            <small>Check for tonight's unfinished assignments</small>
+                        </span>
+                        <span class="mission-progress">
+                            ✅ Enabled<br>
+                            <small>Next: Today 8:00 PM CT</small><br>
+                            <small>ID: 18e381cb-...-afef7</small>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card">
+            <div class="card-header">
+                <h2><span>⚡</span> QUICK ACTIONS</h2>
+            </div>
+            <div class="card-body">
+                <div class="action-grid">
+                    <button class="action-btn" onclick="runMorningBriefingNow()">
+                        <span>🌅</span>
+                        Run Morning Briefing Now
+                    </button>
+                    <button class="action-btn" onclick="runEveningPrepNow()">
+                        <span>🌙</span>
+                        Run Evening Prep Now
+                    </button>
+                    <button class="action-btn" onclick="checkCronStatus()">
+                        <span>🔍</span>
+                        Check Cron Status
+                    </button>
+                    <button class="action-btn" onclick="restartCrons()">
+                        <span>🔄</span>
+                        Restart Cron Scheduler
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cron Syntax Reference -->
+        <div class="card section-full">
+            <div class="card-header">
+                <h2><span>📖</span> CRON REFERENCE</h2>
+            </div>
+            <div class="card-body">
+                <table style="width:100%;color:var(--text-secondary);font-family:monospace;font-size:0.875rem;">
+                    <tr style="border-bottom:1px solid var(--border);">
+                        <td style="padding:0.5rem;"><strong>Expression</strong></td>
+                        <td style="padding:0.5rem;"><strong>Meaning</strong></td>
+                        <td style="padding:0.5rem;"><strong>Example</strong></td>
+                    </tr>
+                    <tr style="border-bottom:1px solid var(--border);">
+                        <td style="padding:0.5rem;">30 7 * * *</td>
+                        <td style="padding:0.5rem;">Daily at 7:30 AM</td>
+                        <td style="padding:0.5rem;">Morning briefing</td>
+                    </tr>
+                    <tr style="border-bottom:1px solid var(--border);">
+                        <td style="padding:0.5rem;">0 20 * * *</td>
+                        <td style="padding:0.5rem;">Daily at 8:00 PM</td>
+                        <td style="padding:0.5rem;">Evening prep</td>
+                    </tr>
+                    <tr style="border-bottom:1px solid var(--border);">
+                        <td style="padding:0.5rem;">0 */6 * * *</td>
+                        <td style="padding:0.5rem;">Every 6 hours</td>
+                        <td style="padding:0.5rem;">Periodic check</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:0.5rem;">0 9 * * MON</td>
+                        <td style="padding:0.5rem;">Mondays at 9:00 AM</td>
+                        <td style="padding:0.5rem;">Weekly report</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function refreshAll() {
+            location.reload();
+        }
+
+        function addCron() {
+            const name = prompt('Cron job name:');
+            const schedule = prompt('Schedule (e.g., "30 7 * * *" for 7:30 AM daily):');
+            const task = prompt('What should this cron do?');
+            
+            if (name && schedule && task) {
+                alert('🚀 Creating new cron job:\n' +
+                    'Name: ' + name + '\n' +
+                    'Schedule: ' + schedule + '\n' +
+                    'Task: ' + task + '\n\n' +
+                    'In real implementation, this would call the cron tool to create the job.');
+            }
+        }
+
+        function runMorningBriefingNow() {
+            alert('🌅 Triggering Morning Briefing cron job now...\n\n' +
+                'This would send the full morning briefing to Telegram immediately.');
+        }
+
+        function runEveningPrepNow() {
+            alert('🌙 Triggering Evening Prep cron job now...\n\n' +
+                'This would check for unfinished assignments and alert if needed.');
+        }
+
+        function checkCronStatus() {
+            alert('⏰ Cron Status:\n\n
