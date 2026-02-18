@@ -1,145 +1,83 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agents | Croati Mission Control</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agents | Croati Mission Control</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <header class="header">
-        <div class="header-brand">
-            <span class="lobster-icon">🦞</span>
-            <h1>CROATI MISSION CONTROL</h1>
-            <span class="live-badge">LIVE</span>
+  <header class="header">
+    <div class="header-brand">
+      <span class="lobster-icon">🦞</span>
+      <h1>CROATI MISSION CONTROL</h1>
+      <span class="live-badge">LIVE</span>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-secondary" onclick="refreshAll()">🔄 Refresh</button>
+      <button class="btn" onclick="spawnNewAgent()">+ Spawn Agent</button>
+    </div>
+  </header>
+
+  <nav class="nav">
+    <ul>
+      <li><a href="index.html">Dashboard</a></li>
+      <li><a href="agents.html" class="active">Agents</a></li>
+      <li><a href="crons.html">Cron Jobs</a></li>
+      <li><a href="missions.html">Mission Log</a></li>
+    </ul>
+  </nav>
+
+  <main class="dashboard">
+    <!-- Active Agents -->
+    <div class="card">
+      <div class="card-header">
+        <h2><span>🟢</span> ACTIVE AGENTS</h2>
+      </div>
+      <div class="card-body">
+        <div class="agent-list" id="active-agents">
+          <p class="placeholder">Loading agents...</p>
         </div>
-        <div class="header-actions">
-            <button class="btn btn-secondary" onclick="refreshAll()">🔄 Refresh</button>
-            <button class="btn" onclick="spawnNewAgent()">+ Spawn Agent</button>
+      </div>
+    </div>
+
+    <!-- Scheduled Agents (Crons) -->
+    <div class="card">
+      <div class="card-header">
+        <h2><span>📅</span> SCHEDULED</h2>
+      </div>
+      <div class="card-body">
+        <div class="agent-list" id="scheduled-agents">
+          <p class="placeholder">Loading crons...</p>
         </div>
-    </header>
+      </div>
+    </div>
 
-    <nav class="nav">
-        <ul>
-            <li><a href="index.html">Dashboard</a></li>
-            <li><a href="agents.html" class="active">Agents</a></li>
-            <li><a href="crons.html">Cron Jobs</a></li>
-            <li><a href="missions.html">Mission Log</a></li>
-        </ul>
-    </nav>
-
-    <main class="dashboard">
-        <!-- Active Agents -->
-        <div class="card">
-            <div class="card-header">
-                <h2><span>🟢</span> ACTIVE AGENTS</h2>
-            </div>
-            <div class="card-body">
-                <div class="agent-list" id="active-agents">
-                    <div class="agent-item">
-                        <div class="agent-info">
-                            <div class="agent-name">Croati (Main)</div>
-                            <div class="agent-task">Channel: telegram • Model: kimi-k2.5</div>
-                            <div class="agent-task">Status: Active — Building Mission Control</div>
-                        </div>
-                        <div class="agent-actions">
-                            <button class="btn btn-secondary">View Session</button>
-                            <button class="btn btn-secondary">Logs</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <!-- Agent Templates -->
+    <div class="card">
+      <div class="card-header">
+        <h2><span>📋</span> AGENT TEMPLATES</h2>
+        <span>Quick spawn pre-configured agents</span>
+      </div>
+      <div class="card-body">
+        <div class="action-grid">
+          <button class="action-btn" onclick="spawnTemplate('research')">
+            <span>🔍</span> Research Agent<br><small>Web search & analysis</small>
+          </button>
+          <button class="action-btn" onclick="spawnTemplate('code')">
+            <span>💻</span> Code Agent<br><small>Build & ship projects</small>
+          </button>
+          <button class="action-btn" onclick="spawnTemplate('notion')">
+            <span>📝</span> Notion Agent<br><small>Task management</small>
+          </button>
+          <button class="action-btn" onclick="spawnTemplate('browser')">
+            <span>🌐</span> Browser Agent<br><small>Web automation</small>
+          </button>
         </div>
+      </div>
+    </div>
+  </main>
 
-        <!-- Scheduled Agents (Crons) -->
-        <div class="card">
-            <div class="card-header">
-                <h2><span>📅</span> SCHEDULED AGENTS</h2>
-            </div>
-            <div class="card-body">
-                <div class="agent-list" id="scheduled-agents">
-                    <div class="agent-item">
-                        <div class="agent-info">
-                            <div class="agent-name">Morning Briefing</div>
-                            <div class="agent-task">Schedules: 7:30 AM CT daily • Next: Tomorrow</div>
-                            <div class="agent-task">Task: Daily briefing with weather, assignments, news</div>
-                        </div>
-                        <div class="agent-actions">
-                            <button class="btn btn-secondary">Edit</button>
-                            <button class="btn btn-secondary">Run Now</button>
-                            <button class="btn btn-secondary">Logs</button>
-                        </div>
-                    </div>
-                    <div class="agent-item">
-                        <div class="agent-info">
-                            <div class="agent-name">Evening Prep</div>
-                            <div class="agent-task">Schedules: 8:00 PM CT daily • Next: Today</div>
-                            <div class="agent-task">Task: Check for unfinished assignments due tonight</div>
-                        </div>
-                        <div class="agent-actions">
-                            <button class="btn btn-secondary">Edit</button>
-                            <button class="btn btn-secondary">Run Now</button>
-                            <button class="btn btn-secondary">Logs</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Agent Templates -->
-        <div class="card">
-            <div class="card-header">
-                <h2><span>📋</span> AGENT TEMPLATES</h2>
-                <span>Quick spawn pre-configured agents</span>
-            </div>
-            <div class="card-body">
-                <div class="action-grid">
-                    <button class="action-btn" onclick="spawnTemplate('research')">
-                        <span>🔍</span>
-                        Research Agent<br>
-                        <small>Web search & analysis</small>
-                    </button>
-                    <button class="action-btn" onclick="spawnTemplate('code')">
-                        <span>💻</span>
-                        Code Agent<br>
-                        <small>Build & ship projects</small>
-                    </button>
-                    <button class="action-btn" onclick="spawnTemplate('notion')">
-                        <span>📝</span>
-                        Notion Agent<br>
-                        <small>Task management</small>
-                    </button>
-                    <button class="action-btn" onclick="spawnTemplate('browser')">
-                        <span>🌐</span>
-                        Browser Agent<br>
-                        <small>Web automation</small>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <script>
-        function refreshAll() {
-            location.reload();
-        }
-
-        function spawnNewAgent() {
-            const task = prompt('What should the new agent do?\n\nExamples:\n- Research OpenAI latest news\n- Build a React component\n- Check Notion for overdue tasks');
-            if (task) {
-                alert('🚀 Spawning new agent for: ' + task + '\n\nThis would spawn an OpenClaw subagent in a real implementation.');
-            }
-        }
-
-        function spawnTemplate(type) {
-            const templates = {
-                'research': 'Research Agent: Web search and analysis tasks',
-                'code': 'Code Agent: Building and shipping code',
-                'notion': 'Notion Agent: Task management and sync',
-                'browser': 'Browser Agent: Web automation and scraping'
-            };
-            alert('🚀 Spawning ' + templates[type] + '\n\nThis would use sessions_spawn with a pre-configured prompt.');
-        }
-    </script>
-<script src="api-client.js"></script></body>
+  <script src="api-client.js"></script>
+</body>
 </html>
