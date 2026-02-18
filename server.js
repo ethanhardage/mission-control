@@ -9,8 +9,8 @@ const app = express();
 const PORT = 8080;
 const WORKSPACE = '/data/.openclaw/workspace';
 
-// CORS: restrict to same origin (localhost only)
-app.use(cors({ origin: `http://localhost:${PORT}` }));
+// CORS: allow all origins for local development
+app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname)));
 

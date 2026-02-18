@@ -166,10 +166,69 @@ async function handleCheckboxClick(pageId, currentStatus, taskName) {
     markCompletionSynced(pageId);
     showToast(`✓ 
 
+async function loadToday() {
+  // Load schedule
+  const scheduleContainer = document.getElementById('today-classes');
+  const assignContainer = document.getElementById('today-assignments');
+  const dateEl = document.getElementById('today-date');
+  try {
+    const data = await apiCall('/today');
+    if (dateEl) dateEl.textContent = data.fullDay + ', ' + data.date;
+    // Render classes
+    if (scheduleContainer) {
+      if (!data.classes?.length) {
+        scheduleContainer.innerHTML = '<p class="placeholder">No classes scheduled today</p>';
+      } else {
+        scheduleContainer.innerHTML = data.classes.map(c => `
+          <div class="class-item">
+            <span class="class-time">${c.time}</span>
+            <div>
+              <div class="class-name">${escapeHtml(c.name)}</div>
+              ${c.location ? `<small style="color:#888">${escapeHtml(c.location)}</small>` : ''}
+            </div>
+          </div>
+        `).join('');
+      }
+    }
+    // Render assignments
+    if (assignContainer) {
+      if (!data.assignments?.length) {
+        assignContainer.innerHTML = '<p class="placeholder">No assignments due today</p>';
+      } else {
+        assignContainer.innerHTML = data.assignments.map(a => `
+          <div class="assignment-item${a.status === 'Done' ? ' done' : a.status === 'In progress' ? ' in-progress' : ''}" 
+               data-page-id="${a.id || ''}" data-status="${a.status}">
+            <div class="assignment-checkbox" onclick="handleCheckboxClick('${a.id || ''}', '${a.status}', '${escapeHtml(a.task || a.name)}')">
+              ${a.status === 'Done' ? '✓' : ''}
+            </div>
+            <div class="assignment-content">
+              <div class="assignment-text">${escapeHtml(a.task || a.name)}</div>
+              <div class="assignment-meta">
+                <span class="status-dot ${a.urgent ? 'urgent' : a.status === 'Done' ? 'not-started' : 'in-progress'}"></span>
+                ${a.course ? escapeHtml(a.course) : ''}
+                ${a.urgent ? '<span style="color:#ef4444">⚠️ URGENT</span>' : ''}
+              </div>
+            </div>
+          </div>
+        `).join('');
+      }
+    }
+    // Update urgent count
+    const urgentBadge = document.getElementById('urgent-count');
+    if (urgentBadge) urgentBadge.textContent = data.urgentCount || 0;
+  } catch (err) {
+    console.error('Failed to load today:', err);
+    if (scheduleContainer) scheduleContainer.innerHTML = '<p class="placeholder">Failed to load schedule</p>';
+    if (assignContainer) assignContainer.innerHTML = '<p class="placeholder">Failed to load assignments</p>';
+  }
+}
+
 async function loadAgents() {
-  const data = await apiCall('/sessions');
   const container = document.getElementById('active-agents') || document.getElementById('active-agents-list');
   if (!container) return;
+  try {
+  try {
+    const data = await apiCall('/sessions');
 
   if (!data || data.error || !Array.isArray(data.sessions) || !data.sessions.length) {
     container.innerHTML = '<p class="placeholder">No active agents</p>';
@@ -192,6 +251,10 @@ async function loadAgents() {
 
   const countEl = document.getElementById('agent-count');
   if (countEl) countEl.textContent = `${data.count != null ? data.count : data.sessions.length} active`;
+  } catch (err) {
+    console.error("Failed to load agents:", err);
+    container.innerHTML = "<p class=placeholder>Failed to load agents</p>";
+  }
 }
 
 async function spawnAgent(task) {
@@ -239,6 +302,9 @@ async function killAgent(id) {
 }
 
 async function loadCrons() {
+  const container = document.getElementById("cron-list") || document.getElementById("scheduled-agents");
+  if (!container) return;
+  try {
   const data = await apiCall('/crons');
   const container = document.getElementById('cron-list') || document.getElementById('scheduled-agents');
   if (!container) return;
