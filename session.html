@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Session | Mission Control</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .log-viewer {
+      background: #1a1a2e;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 16px;
+      font-family: 'SF Mono', monospace;
+      font-size: 13px;
+      max-height: 500px;
+      overflow-y: auto;
+    }
+    .log-entry {
+      padding: 8px 0;
+      border-bottom: 1px solid #222;
+      color: #ccc;
+    }
+    .log-entry:last-child { border-bottom: none; }
+    .log-time { color: #666; font-size: 11px; }
+    .log-tool { color: #22d3ee; }
+    .log-think { color: #a78bfa; font-style: italic; }
+    .log-error { color: #ef4444; }
+    .cost-bar {
+      display: flex;
+      gap: 16px;
+      margin: 16px 0;
+    }
+    .cost-item {
+      background: #1e1e2e;
+      padding: 12px 20px;
+      border-radius: 8px;
+      border-left: 3px solid #ff6b00;
+    }
+    .cost-label { font-size: 12px; color: #888; }
+    .cost-value { font-size: 20px; font-weight: 600; color: #fff; }
+    .trace-tree {
+      margin: 16px 0;
+      padding-left: 20px;
+    }
+    .trace-node {
+      position: relative;
+      padding: 8px 0 8px 24px;
+      border-left: 2px solid #333;
+    }
+    .trace-node::before {
+      content: '';
+      position: absolute;
+      left: -6px;
+      top: 16px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #ff6b00;
+    }
+    .trace-node.success::before { background: #22c55e; }
+    .trace-node.error::before { background: #ef4444; }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="header-brand">
+      <span class="lobster-icon">🦞</span>
+      <h1>CROATI MISSION CONTROL</h1>
+      <span class="live-badge">LIVE</span>
+    </div>
+    <div class="header-actions">
+      <a href="index.html" class="btn btn-secondary">← Back</a>
+      <button class="btn" onclick="refreshSession()">🔄 Refresh</button>
+    </div>
+  </header>
+
+  <nav class="nav">
+    <ul>
+      <li><a href="index.html">Dashboard</a></li>
+      <li><a href="agents.html">Agents</a></li>
+      <li><a href="crons.html">Cron Jobs</a></li>
+      <li><a href="missions.html">Mission Log</a></li>
+    </ul>
+  </nav>
+
+  <main class="dashboard">
+    <!-- Session Header -->
+    <div class="card">
+      <div class="card-header">
+        <h2 id="session-title">Loading Session...</h2>
+        <span id="session-status" class="badge">-</span>
+      </div>
+      <div class="card-body">
+        <div class="cost-bar">
+          <div class="cost-item">
+            <div class="cost-label">Tokens</div>
+            <div class="cost-value" id="stat-tokens">-</div>
+          </div>
+          <div class="cost-item">
+            <div class="cost-label">Duration</div>
+            <div class="cost-value" id="stat-duration">-</div>
+          </div>
+          <div class="cost-item">
+            <div class="cost-label">Model</div>
+            <div class="cost-value" id="stat-model">-</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Trace/Steps -->
+    <div class="card">
+      <div class="card-header">
+        <h2><span>🌳</span> Execution Trace</h2>
+      </div>
+      <div class="card-body">
+        <div class="trace-tree" id="trace-tree">
+          <p class="placeholder">Loading trace...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Live Logs -->
+    <div class="card">
+      <div class="card-header">
+        <h2><span>📜</span> Live Logs</h2>
+        <span><input type="checkbox" id="auto-scroll" checked> Auto-scroll</span>
+      </div>
+      <div class="card-body">
+        <div class="log-viewer" id="log-viewer">
+          <p class="placeholder">Loading logs...</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="session.js"></script>
+</body>
+</html>

@@ -45,17 +45,25 @@ async function loadAgents() {
   }
 
   container.innerHTML = data.sessions.map(agent => `
-    <div class="agent-item">
+    <div class="agent-item" style="cursor:pointer" onclick="window.location.href='session.html?id=${agent.id}'">
       <div class="agent-info">
         <div class="agent-name">${agent.name}</div>
-        <div class="agent-task">${agent.type} • ${agent.lastActivity}</div>
+        <div class="agent-task">${agent.type} • ${agent.lastActivity} • ${agent.size}</div>
       </div>
-      <div class="agent-actions">
+      <div class="agent-actions" onclick="event.stopPropagation()">
         <span class="badge">${agent.status}</span>
-        <button class="btn btn-secondary" onclick="killAgent('${agent.id}')">Kill</button>
+        <button class="btn btn-secondary" onclick="viewSession('${agent.id}')">View</button>
+        <button class="btn btn-danger" onclick="killAgent('${agent.id}')">Kill</button>
       </div>
     </div>
   `).join('');
+  
+  const countEl = document.getElementById('agent-count');
+  if (countEl) countEl.textContent = `${data.count} total`;
+}
+
+function viewSession(id) {
+  window.location.href = `session.html?id=${id}`;
 }
 
 async function spawnAgent() {
