@@ -114,5 +114,84 @@ function showToast(msg, type) {
   setTimeout(() => t.remove(), 2000);
 }
 
+// --- Live Output SSE streaming ---
+
+let liveEventSource = null;
+
+function startLiveStream(sessionId) {
+  const container = document.getElementById('live-output');
+  const statusEl = document.getElementById('stream-status');
+  let firstEvent = true;
+
+  if (liveEventSource) liveEventSource.close();
+
+  liveEventSource = new EventSource(`${API_BASE}/sessions/${sessionId}/stream`);
+
+  liveEventSource.onopen = () => {
+    statusEl.textContent = 'Live';
+    statusEl.className = 'stream-status live';
+  };
+
+  liveEventSource.onmessage = (e) => {
+    if (firstEvent) {
+      container.innerHTML = '';
+      firstEvent = false;
+    }
+
+    let msg;
+    try { msg = JSON.parse(e.data); } catch { return; }
+
+    const lines = extractLiveLines(msg);
+    for (const line of lines) {
+      const div = document.createElement('div');
+      div.className = `live-line type-${line.type}`;
+      div.textContent = line.text;
+      container.appendChild(div);
+    }
+
+    if (document.getElementById('auto-scroll')?.checked) {
+      container.scrollTop = container.scrollHeight;
+    }
+  };
+
+  liveEventSource.onerror = () => {
+    statusEl.textContent = 'Disconnected';
+    statusEl.className = 'stream-status closed';
+    liveEventSource.close();
+    liveEventSource = null;
+  };
+}
+
+function extractLiveLines(msg) {
+  const lines = [];
+  const ts = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString() : '';
+
+  if (Array.isArray(msg.content)) {
+    for (const c of msg.content) {
+      if (c.type === 'text' && c.text) {
+        lines.push({ type: 'text', text: `[${ts}] ${c.text.substring(0, 300)}` });
+      } else if (c.type === 'thinking' && c.thinking) {
+        lines.push({ type: 'think', text: `[${ts}] <think> ${c.thinking.substring(0, 200)}` });
+      } else if (c.type === 'toolCall') {
+        lines.push({ type: 'tool', text: `[${ts}] → ${c.name || 'tool'}(${JSON.stringify(c.input || {}).substring(0, 100)})` });
+      } else if (c.type === 'toolResult') {
+        const out = typeof c.output === 'string' ? c.output : JSON.stringify(c.output);
+        lines.push({ type: 'tool', text: `[${ts}]   ← ${out.substring(0, 150)}` });
+      }
+    }
+  }
+
+  // Fallback: show raw role/model line if nothing extracted
+  if (lines.length === 0 && msg.role) {
+    lines.push({ type: 'text', text: `[${ts}] [${msg.role}] (no displayable content)` });
+  }
+
+  return lines;
+}
+
 // Init
-document.addEventListener('DOMContentLoaded', loadSessionDetail);
+document.addEventListener('DOMContentLoaded', () => {
+  const sessionId = getSessionId();
+  loadSessionDetail();
+  startLiveStream(sessionId);
+});

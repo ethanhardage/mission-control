@@ -60,6 +60,37 @@
     }
     .trace-node.success::before { background: #22c55e; }
     .trace-node.error::before { background: #ef4444; }
+    .live-output {
+      background: #0d0d1a;
+      border: 1px solid #1e3a5f;
+      border-radius: 8px;
+      padding: 16px;
+      font-family: 'SF Mono', monospace;
+      font-size: 12px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .live-line {
+      padding: 3px 0;
+      color: #94a3b8;
+      white-space: pre-wrap;
+      word-break: break-all;
+      border-bottom: 1px solid #111827;
+    }
+    .live-line.type-text { color: #e2e8f0; }
+    .live-line.type-tool { color: #22d3ee; }
+    .live-line.type-think { color: #a78bfa; font-style: italic; }
+    .live-line.type-error { color: #ef4444; }
+    .stream-status {
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 12px;
+      background: #1e293b;
+      color: #64748b;
+    }
+    .stream-status.connecting { color: #f59e0b; }
+    .stream-status.live { color: #22c55e; }
+    .stream-status.closed { color: #64748b; }
   </style>
 </head>
 <body>
@@ -130,6 +161,19 @@
       <div class="card-body">
         <div class="log-viewer" id="log-viewer">
           <p class="placeholder">Loading logs...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Live Output (SSE stream) -->
+    <div class="card">
+      <div class="card-header">
+        <h2><span>📡</span> Live Output</h2>
+        <span id="stream-status" class="stream-status connecting">Connecting...</span>
+      </div>
+      <div class="card-body">
+        <div class="live-output" id="live-output">
+          <span style="color:#444">Waiting for agent output...</span>
         </div>
       </div>
     </div>

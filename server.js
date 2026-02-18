@@ -9,9 +9,73 @@ const app = express();
 const PORT = 8080;
 const WORKSPACE = '/data/.openclaw/workspace';
 
-app.use(cors({ origin: '*' }));
+// CORS: restrict to same origin (localhost only)
+app.use(cors({ origin: `http://localhost:${PORT}` }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname)));
+
+// Allowed models for agent spawn
+const ALLOWED_MODELS = new Set(['kimi', 'claude', 'gpt4', 'gemini']);
+
+// Cron history file path
+const CRON_HISTORY_FILE = path.join(__dirname, 'data', 'cron-history.json');
+const MAX_HISTORY = 20;
+
+// UUID generator
+function generateUUID() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
+// Load cron history
+function loadCronHistory() {
+  try {
+    if (fs.existsSync(CRON_HISTORY_FILE)) {
+      return JSON.parse(fs.readFileSync(CRON_HISTORY_FILE, 'utf-8')) || [];
+    }
+  } catch (e) {
+    console.error('Error loading cron history:', e.message);
+  }
+  return [];
+}
+
+// Save cron history
+function saveCronHistory(history) {
+  try {
+    fs.writeFileSync(CRON_HISTORY_FILE, JSON.stringify(history.slice(-MAX_HISTORY), null, 2));
+  } catch (e) {
+    console.error('Error saving cron history:', e.message);
+  }
+}
+
+// Add a cron run record
+function addCronRunRecord(cronId, name, status, exitCode, durationMs, outputPreview) {
+  const history = loadCronHistory();
+  const record = {
+    id: generateUUID(),
+    cronId,
+    name,
+    timestamp: new Date().toISOString(),
+    status,
+    durationMs,
+    outputPreview: outputPreview?.substring(0, 200) || '',
+    exitCode
+  };
+  history.push(record);
+  saveCronHistory(history);
+  return record;
+}
+
+// Validate session/cron id: alphanumeric, hyphens, underscores only
+const SAFE_ID_RE = /^[\w-]+$/;
+
+// Load schedule config once at startup
+const scheduleConfig = JSON.parse(
+  fs.readFileSync(path.join(__dirname, 'config', 'schedule.json'), 'utf-8')
+);
 
 // Helpers
 function getSessionFiles() {
@@ -30,17 +94,17 @@ function parseSessionFile(id) {
     const messages = lines.map(l => {
       try { return JSON.parse(l); } catch(e) { return null; }
     }).filter(Boolean);
-    
+
     // Extract cost/tokens from messages
     let totalTokens = 0;
     let model = 'unknown';
     const logs = [];
     const trace = [];
-    
+
     messages.forEach((msg, i) => {
       if (msg.usage?.totalTokens) totalTokens = msg.usage.totalTokens;
       if (msg.model) model = msg.model.split('/').pop() || msg.model;
-      
+
       // Build trace
       if (msg.role === 'assistant') {
         const hasTools = msg.content?.some(c => c.type === 'toolCall');
@@ -51,7 +115,7 @@ function parseSessionFile(id) {
           time: new Date(msg.timestamp).toLocaleTimeString()
         });
       }
-      
+
       // Build logs
       if (msg.content) {
         msg.content.forEach(c => {
@@ -62,7 +126,7 @@ function parseSessionFile(id) {
         });
       }
     });
-    
+
     return {
       id,
       messages,
@@ -96,7 +160,7 @@ app.get('/api/sessions', (req, res) => {
       size: `${Math.round(f.size/1024)}KB`
     };
   });
-  
+
   // Demo data
   if (sessions.length === 0) {
     sessions = [
@@ -104,15 +168,18 @@ app.get('/api/sessions', (req, res) => {
       { id: 'demo-research', shortId: 'demo-res', name: 'Research Agent', type: 'subagent', status: 'idle', lastActivity: '2m ago', size: '12KB' }
     ];
   }
-  
+
   res.json({ sessions, count: sessions.length });
 });
 
 // Session detail with cost/trace/logs
 app.get('/api/sessions/:id', (req, res) => {
-  const data = parseSessionFile(req.params.id);
+  const { id } = req.params;
+  if (!SAFE_ID_RE.test(id)) return res.status(400).json({ error: 'Invalid session id' });
+
+  const data = parseSessionFile(id);
   if (data.error) return res.status(404).json({ error: data.error });
-  
+
   res.json({
     id: data.id,
     name: data.id.includes('subagent') ? 'Sub-agent' : (data.id.includes('cron') ? 'Cron Job' : 'Session'),
@@ -123,6 +190,18 @@ app.get('/api/sessions/:id', (req, res) => {
     logs: data.logs,
     trace: data.trace
   });
+});
+
+// Get cron run history
+app.get('/api/crons/history', (req, res) => {
+  const history = loadCronHistory();
+  res.json({ history: history.slice(-MAX_HISTORY).reverse() });
+});
+
+// Clear cron run history
+app.delete('/api/crons/history', (req, res) => {
+  saveCronHistory([]);
+  res.json({ success: true, message: 'History cleared' });
 });
 
 app.get('/api/crons', (req, res) => {
@@ -137,68 +216,106 @@ app.get('/api/crons', (req, res) => {
 
 app.post('/api/crons/:id/run', (req, res) => {
   const { id } = req.params;
+  if (!SAFE_ID_RE.test(id)) return res.status(400).json({ error: 'Invalid cron id' });
+  const { execFileSync } = require('child_process');
+  try { execFileSync('which', ['npx']); } catch { return res.status(500).json({ success: false, error: 'npx not found' }); }
   spawn('/usr/local/bin/npx', ['openclaw', 'cron', 'run', id], { detached: true, stdio: 'ignore', cwd: WORKSPACE }).unref();
   res.json({ success: true, message: `Cron triggered` });
 });
 
 app.post('/api/agents/spawn', (req, res) => {
-  const { task, model = 'kimi' } = req.body;
+  let { task, model = 'kimi' } = req.body;
   if (!task) return res.status(400).json({ error: 'Task required' });
-  spawn('/usr/local/bin/npx', ['openclaw', 'sessions', 'spawn', '--task', task, '--model', model], { detached: true, stdio: 'ignore', cwd: WORKSPACE }).unref();
-  res.json({ success: true, message: 'Agent spawned', task: task.substring(0,50) });
+  if (typeof task !== 'string') return res.status(400).json({ error: 'Task must be a string' });
+  if (task.length > 500) return res.status(400).json({ error: 'Task too long (max 500 chars)' });
+  if (!ALLOWED_MODELS.has(model)) return res.status(400).json({ error: 'Invalid model' });
+
+  const child = spawn('/usr/local/bin/npx', ['openclaw', 'sessions', 'spawn', '--task', task, '--model', model], { detached: true, stdio: 'ignore', cwd: WORKSPACE });
+  child.unref();
+  const pidFile = path.join(__dirname, 'pids.json');
+  let pids = {};
+  try { pids = JSON.parse(fs.readFileSync(pidFile, 'utf-8')); } catch {}
+  // Use task slug as key since we don't have a session id at spawn time
+  const key = `${Date.now()}-${task.substring(0, 20).replace(/\W+/g, '_')}`;
+  pids[key] = child.pid;
+  fs.writeFileSync(pidFile, JSON.stringify(pids));
+  res.json({ success: true, message: 'Agent spawned', task: task.substring(0, 50), agentId: key });
 });
 
 app.post('/api/agents/:id/kill', (req, res) => {
-  res.json({ success: true, message: 'Kill sent' });
+  const { id } = req.params;
+  if (!SAFE_ID_RE.test(id)) return res.status(400).json({ error: 'Invalid agent id' });
+  const pidFile = path.join(__dirname, 'pids.json');
+  let pids = {};
+  try { pids = JSON.parse(fs.readFileSync(pidFile, 'utf-8')); } catch {}
+  const pid = pids[id];
+  if (!pid) return res.status(404).json({ error: 'Agent not found' });
+  try {
+    process.kill(pid, 'SIGTERM');
+    delete pids[id];
+    fs.writeFileSync(pidFile, JSON.stringify(pids));
+    res.json({ success: true, message: 'Kill sent' });
+  } catch (e) {
+    res.status(500).json({ error: `Failed to kill: ${e.message}` });
+  }
 });
 
-// Get today's classes and assignments
+// Get today's classes and assignments — loaded from config/schedule.json
 app.get('/api/today', (req, res) => {
   const day = new Date().getDay();
   const dow = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][day];
-  
-  // Static schedule from class-schedule.md
-  const schedule = {
-    'Mon': [
-      { time: '9:30-10:45', class: 'OM 375', color: '#ff6b00' },
-      { time: '11:00-11:50', class: 'GBA 346', color: '#22c55e' },
-      { time: '12:00-12:50', class: 'MIS 520', color: '#3b82f6' },
-      { time: '2:00-3:15', class: 'MIS 505', color: '#a78bfa' }
-    ],
-    'Tue': [{ time: '2:00-3:15', class: 'OM 300', color: '#ef4444' }],
-    'Wed': [
-      { time: '9:30-10:45', class: 'OM 375', color: '#ff6b00' },
-      { time: '12:00-12:50', class: 'MIS 520', color: '#3b82f6' },
-      { time: '2:00-3:15', class: 'MIS 505', color: '#a78bfa' }
-    ],
-    'Thu': [{ time: '2:00-3:15', class: 'OM 300', color: '#ef4444' }],
-    'Fri': [],
-    'Sat': [],
-    'Sun': []
-  };
-  
-  // Demo assignments data
-  const assignments = {
-    'Mon': [
-      { task: 'OM 375 Homework #3', due: 'Tomorrow', status: 'not-started', urgent: true },
-      { task: 'MIS 520 Presentation', due: 'Tomorrow', status: 'in-progress', urgent: false }
-    ],
-    'Tue': [{ task: 'OM 300 Reading', due: 'Thu', status: 'not-started', urgent: false }],
-    'Wed': [{ task: 'MIS 505 Lab', due: 'Wed', status: 'in-progress', urgent: false }],
-    'Thu': [{ task: 'OM 300 Quiz', due: 'Thu', status: 'not-started', urgent: true }],
-    'Fri': [],
-    'Sat': [],
-    'Sun': []
-  };
-  
+
+  const classes = scheduleConfig.schedule[dow] || [];
+  const assignments = scheduleConfig.assignments[dow] || [];
+
   res.json({
     day: dow,
     fullDay: ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][day],
     date: new Date().toLocaleDateString(),
-    classes: schedule[dow] || [],
-    assignments: assignments[dow] || [],
-    urgentCount: (assignments[dow] || []).filter(a => a.urgent).length
+    classes,
+    assignments,
+    urgentCount: assignments.filter(a => a.urgent).length
   });
+});
+
+// SSE: stream new lines from a session's .jsonl file in real-time
+app.get('/api/sessions/:id/stream', (req, res) => {
+  const { id } = req.params;
+  if (!SAFE_ID_RE.test(id)) return res.status(400).end();
+
+  const filePath = path.join(WORKSPACE, id + '.jsonl');
+  if (!fs.existsSync(filePath)) return res.status(404).end();
+
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders();
+
+  let offset = fs.statSync(filePath).size;
+
+  const interval = setInterval(() => {
+    try {
+      const stat = fs.statSync(filePath);
+      if (stat.size <= offset) return;
+
+      const fd = fs.openSync(filePath, 'r');
+      const buf = Buffer.alloc(stat.size - offset);
+      fs.readSync(fd, buf, 0, buf.length, offset);
+      fs.closeSync(fd);
+      offset = stat.size;
+
+      const newText = buf.toString('utf-8');
+      const lines = newText.split('\n').filter(l => l.trim());
+      for (const line of lines) {
+        try {
+          const msg = JSON.parse(line);
+          res.write(`data: ${JSON.stringify(msg)}\n\n`);
+        } catch {}
+      }
+    } catch {}
+  }, 500);
+
+  req.on('close', () => clearInterval(interval));
 });
 
 app.get('/api/status', (req, res) => res.json({
