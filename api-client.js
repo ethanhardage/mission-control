@@ -1,223 +1,146 @@
 /**
  * Mission Control API Client
- * Connects the dashboard to the backend API
  */
 
-const API_BASE = '';
+const API_BASE = '/api';
 
-// Utility functions
 async function apiCall(endpoint, options = {}) {
   try {
-    const response = await fetch(`${API_BASE}/api${endpoint}`, {
+    const response = await fetch(`${API_BASE}${endpoint}`, {
       headers: { 'Content-Type': 'application/json' },
       ...options
     });
     return await response.json();
   } catch (error) {
-    console.error('API Error:', error);
     return { error: error.message };
   }
 }
 
 function showToast(message, type = 'info') {
-  const toast = document.getElementById('toast') || document.createElement('div');
-  toast.id = 'toast';
-  toast.className = `toast toast-${type}`;
+  const toast = document.createElement('div');
+  toast.className = 'toast';
   toast.textContent = message;
+  toast.style.cssText = `
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 12px 20px;
+    border-radius: 8px;
+    background: ${type === 'error' ? '#ef4444' : type === 'success' ? '#22c55e' : '#f59e0b'};
+    color: white;
+    z-index: 1000;
+  `;
   document.body.appendChild(toast);
   setTimeout(() => toast.remove(), 3000);
 }
-
-// ==================== AGENT FUNCTIONS ====================
 
 async function loadAgents() {
   const data = await apiCall('/sessions');
   const container = document.getElementById('active-agents-list');
   if (!container) return;
   
-  if (data.error || !data.sessions) {
-    container.innerHTML = '<p class="placeholder">Failed to load agents</p>';
+  if (data.error || !data.sessions?.length) {
+    container.innerHTML = '<p class="placeholder">No active agents</p>';
     return;
   }
-  
-  const html = data.sessions.map(agent => `
-    <div class="agent-item ${agent.status}">
+
+  container.innerHTML = data.sessions.map(agent => `
+    <div class="agent-item">
       <div class="agent-info">
         <div class="agent-name">${agent.name}</div>
-        <div class="agent-task">Status: ${agent.status} • ${agent.age}</div>
+        <div class="agent-task">${agent.type} • ${agent.lastActivity}</div>
       </div>
       <div class="agent-actions">
-        <button class="btn btn-secondary" onclick="viewAgent('${agent.id}')">View</button>
-        <button class="btn btn-danger" onclick="killAgent('${agent.id}')">Kill</button>
+        <span class="badge">${agent.status}</span>
+        <button class="btn btn-secondary" onclick="killAgent('${agent.id}')">Kill</button>
       </div>
     </div>
   `).join('');
-  
-  container.innerHTML = html || '<p class="placeholder">No active agents</p>';
 }
 
 async function spawnAgent() {
   const task = prompt('What should the agent do?');
   if (!task) return;
   
-  showToast('🚀 Spawning agent...', 'info');
+  showToast('Spawning agent...', 'info');
   const result = await apiCall('/agents/spawn', {
     method: 'POST',
     body: JSON.stringify({ task, model: 'kimi' })
   });
   
   if (result.success) {
-    showToast(`✅ ${result.message}`, 'success');
-    loadAgents();
-  } else {
-    showToast(`❌ Failed: ${result.error}`, 'error');
+    showToast('Agent spawned!', 'success');
+    setTimeout(loadAgents, 2000);
+    addEvent('Agent spawned');
   }
 }
 
 async function killAgent(id) {
   if (!confirm('Kill this agent?')) return;
-  
-  showToast('Stopping agent...', 'info');
-  const result = await apiCall(`/agents/${id}/kill`, {
-    method: 'POST'
-  });
-  
-  showToast(`Agent stopped`, 'success');
+  await apiCall(`/agents/${id}/kill`, { method: 'POST' });
+  showToast('Agent stopped', 'success');
   loadAgents();
 }
-
-function viewAgent(id) {
-  alert(`View agent: ${id}\n\n(OpenClaw integration would show session details here)`);
-}
-
-// ==================== CRON FUNCTIONS ====================
 
 async function loadCrons() {
   const data = await apiCall('/crons');
   const container = document.getElementById('cron-list');
   if (!container) return;
   
-  if (data.error || !data.crons) {
-    container.innerHTML = '<p class="placeholder">Failed to load crons</p>';
+  if (data.error || !data.crons?.length) {
+    container.innerHTML = '<p class="placeholder">No cron jobs</p>';
     return;
   }
-  
-  const html = data.crons.map(cron => `
-    <div class="cron-item ${cron.status === 'enabled' ? 'active' : 'disabled'}">
-      <span class="cron-name">
-        <strong>${cron.name}</strong><br>
-        <small>${cron.schedule}</small>
-      </span>
-      <span class="cron-actions">
-        <span class="badge ${cron.status === 'enabled' ? 'badge-queued' : 'badge-paused'}">${cron.status}</span>
-        <button class="btn btn-sm" onclick="runCron('${cron.id}')">▶ Run</button>
-        <button class="btn btn-sm btn-secondary" onclick="toggleCron('${cron.id}')">${cron.status === 'enabled' ? '⏸ Pause' : '▶ Enable'}</button>
+
+  container.innerHTML = data.crons.map(cron => `
+    <div class="cron-item">
+      <span><strong>${cron.name}</strong><br><small>${cron.displaySchedule || cron.schedule}</small></span>
+      <span>
+        <span class="badge">${cron.status}</span>
+        <button class="btn btn-sm" onclick="runCron('${cron.id}', '${cron.name}')">Run</button>
       </span>
     </div>
   `).join('');
-  
-  container.innerHTML = html || '<p class="placeholder">No cron jobs</p>';
 }
 
-async function runCron(id) {
-  showToast('Running cron job...', 'info');
-  const result = await apiCall(`/crons/${id}/run`, {
-    method: 'POST'
-  });
-  
+async function runCron(id, name) {
+  showToast(`Running ${name}...`, 'info');
+  const result = await apiCall(`/crons/${id}/run`, { method: 'POST' });
   if (result.success) {
-    showToast('✅ Cron job completed', 'success');
-  } else {
-    showToast(`❌ Failed: ${result.error}`, 'error');
+    showToast(`${name} triggered!`, 'success');
+    addEvent('Cron: ' + name);
   }
 }
-
-async function toggleCron(id) {
-  alert(`Toggle cron: ${id}\n\n(Enable/disable would go here)`);
-}
-
-// ==================== QUICK ACTIONS ====================
 
 async function quickAction(action) {
-  switch(action) {
-    case 'weather':
-      showToast('🌤️ Fetching weather...', 'info');
-      setTimeout(() => showToast('Weather: 72°F, Sunny', 'success'), 1000);
-      break;
-    case 'notion':
-      showToast('📝 Syncing with Notion...', 'info');
-      setTimeout(() => showToast('Synced 3 tasks', 'success'), 1000);
-      break;
-    case 'cron':
-      spawnAgent();
-      break;
-    case 'tts':
-      const text = prompt('Text to speak:');
-      if (text) showToast(`🔊 Speaking: "${text}"`, 'success');
-      break;
-    case 'kill-all':
-      if (confirm('Kill all agents?')) {
-        showToast('Stopping all agents...', 'info');
-      }
-      break;
-    case 'browser':
-      window.open('https://google.com', '_blank');
-      break;
-    default:
-      showToast(`Action: ${action}`, 'info');
-  }
+  if (action === 'spawn') spawnAgent();
+  else if (action === 'refresh') { loadAgents(); loadCrons(); showToast('Refreshed', 'success'); }
+  else showToast(`Action: ${action}`, 'info');
 }
 
-// ==================== SYSTEM STATUS ====================
-
-async function loadStatus() {
-  const data = await apiCall('/status');
-  
-  // Update health cards
-  const healthCards = document.querySelectorAll('.health-card');
-  const status = data;
-  
-  if (healthCards[0]) healthCards[0].className = `health-card ${status.gateway.status}`;
-  if (healthCards[1]) healthCards[1].className = `health-card ${status.kimi.status}`;
-  if (healthCards[2]) healthCards[2].className = `health-card ${status.github.status}`;
-  if (healthCards[3]) healthCards[3].className = `health-card ${status.notion.status}`;
+function addEvent(message) {
+  const list = document.getElementById('events-list');
+  if (!list) return;
+  const time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  const item = document.createElement('div');
+  item.className = 'event-item';
+  item.innerHTML = `<span class="event-time">${time}</span><span>${message}</span>`;
+  list.insertBefore(item, list.firstChild);
+  if (list.children.length > 10) list.removeChild(list.lastChild);
 }
-
-// ==================== INITIALIZATION ====================
 
 function initMissionControl() {
-  console.log('🦞 Mission Control initialized');
-  
-  // Load data
   loadAgents();
   loadCrons();
-  loadStatus();
+  setInterval(() => { loadAgents(); loadCrons(); }, 30000);
   
-  // Auto-refresh every 30 seconds
-  setInterval(() => {
-    loadAgents();
-    loadCrons();
-    loadStatus();
-  }, 30000);
-  
-  // Manual refresh
-  window.refreshAll = () => {
-    showToast('🔄 Refreshing...', 'info');
-    loadAgents();
-    loadCrons();
-    loadStatus();
-  };
-  
-  // Expose functions globally
   window.spawnAgent = spawnAgent;
   window.killAgent = killAgent;
-  window.viewAgent = viewAgent;
   window.runCron = runCron;
-  window.toggleCron = toggleCron;
   window.quickAction = quickAction;
+  window.refreshAll = () => { loadAgents(); loadCrons(); };
 }
 
-// Start when page loads
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initMissionControl);
 } else {
