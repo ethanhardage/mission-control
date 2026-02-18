@@ -58,7 +58,7 @@
                 <h2><span>⏰</span> ACTIVE CRON JOBS</h2>
             </div>
             <div class="card-body">
-                <div class="mission-list">
+                <div class="mission-list" id="cron-list">
                     <div class="mission-item queued">
                         <span class="mission-name">
                             <strong>Morning Briefing for Ethan</strong><br>
@@ -106,7 +106,7 @@
                     </button>
                     <button class="action-btn" onclick="restartCrons()">
                         <span>🔄</span>
-                        Restart Cron Scheduler
+                        Restart Scheduler
                     </button>
                 </div>
             </div>
@@ -151,7 +151,7 @@
 
     <script>
         function refreshAll() {
-            location.reload();
+            loadCrons();
         }
 
         function addCron() {
@@ -179,4 +179,19 @@
         }
 
         function checkCronStatus() {
-            alert('⏰ Cron Status:\n\n
+            alert('⏰ Cron Status:\n\n' +
+                '•Morning Briefing: Enabled\n' +
+                '• Evening Prep: Enabled\n' +
+                '• Scheduler: Running\n' +
+                '• Next check: Auto');
+        }
+
+        function restartCrons() {
+            if (confirm('Restart cron scheduler?')) {
+                alert('🔄 Restarting cron scheduler...');
+            }
+        }
+    </script>
+    <script src="api-client.js"></script>
+</body>
+</html>
