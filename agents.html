@@ -79,5 +79,75 @@
   </main>
 
   <script src="api-client.js"></script>
+  <script>
+    async function spawnNewAgent() {
+      const task = prompt('Enter task for new agent:');
+      if (!task || !task.trim()) return;
+      showToast('Spawning agent...', 'info');
+      const result = await apiCall('/agents/spawn', {
+        method: 'POST',
+        body: JSON.stringify({ task: task.trim(), model: 'claude' })
+      });
+      if (result.error) {
+        showToast('Failed: ' + result.error, 'error');
+      } else {
+        showToast('Agent spawned!', 'success');
+        loadAgents();
+      }
+    }
+
+    const TEMPLATE_TASKS = {
+      research: 'Research the latest developments in AI and summarize key findings',
+      code: 'Review the codebase and suggest improvements to code quality and structure',
+      notion: 'Sync and organize all pending tasks in Notion, flag anything overdue',
+      browser: 'Browse the web and gather information as requested by the user'
+    };
+
+    async function spawnTemplate(type) {
+      const task = TEMPLATE_TASKS[type];
+      if (!task) return;
+      if (!confirm('Spawn ' + type + ' agent?\n\n"' + task + '"')) return;
+      showToast('Spawning ' + type + ' agent...', 'info');
+      const result = await apiCall('/agents/spawn', {
+        method: 'POST',
+        body: JSON.stringify({ task, model: 'claude' })
+      });
+      if (result.error) {
+        showToast('Failed: ' + result.error, 'error');
+      } else {
+        showToast(type.charAt(0).toUpperCase() + type.slice(1) + ' agent spawned!', 'success');
+        loadAgents();
+      }
+    }
+
+    async function loadScheduledAgents() {
+      const container = document.getElementById('scheduled-agents');
+      if (!container) return;
+      try {
+        const data = await apiCall('/crons');
+        if (!data || data.error || !data.crons || !data.crons.length) {
+          container.innerHTML = '<p class="placeholder">No scheduled agents</p>';
+          return;
+        }
+        let html = '';
+        for (let i = 0; i < data.crons.length; i++) {
+          const c = data.crons[i];
+          html += '<div class="agent-item">';
+          html += '<div class="agent-name">' + escapeHtml(c.name) + '<br>';
+          html += '<small style="color:var(--text-secondary)">' + escapeHtml(c.displaySchedule) + '</small></div>';
+          html += '<span class="badge" style="background:#f59e0b">' + escapeHtml(c.status) + '</span>';
+          html += '</div>';
+        }
+        container.innerHTML = html;
+      } catch (e) {
+        container.innerHTML = '<p class="placeholder">Failed to load</p>';
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      loadAgents();
+      loadScheduledAgents();
+    });
+  </script>
 </body>
 </html>

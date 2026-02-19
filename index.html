@@ -199,6 +199,19 @@
     #briefing-modal h2 {
       color: var(--accent-orange);
     }
+    /* Command Palette */
+    #cmdk-list { list-style:none; max-height:300px; overflow-y:auto; margin:0; padding:8px; }
+    .cmdk-item {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:10px 12px; border-radius:6px; cursor:pointer; color:var(--text-primary);
+    }
+    .cmdk-item:hover, .cmdk-item.cmdk-selected { background:rgba(255,107,0,0.15); }
+    .cmdk-item-shortcut {
+      font-size:11px; padding:2px 8px; border-radius:4px;
+      background:var(--bg-tertiary); color:var(--text-secondary); font-family:monospace;
+    }
+    .cmdk-empty { padding:20px; text-align:center; color:var(--text-secondary); }
+    #cmdk-list mark { background:rgba(255,107,0,0.3); color:var(--accent-orange); border-radius:2px; }
   </style>
 </head>
 <body>
@@ -271,3 +284,53 @@
       </div>
       <div class="card-body">
         <div class="pipeline-stats">
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Command Palette -->
+  <div id="cmdk-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9999;align-items:center;justify-content:center;">
+    <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:12px;width:560px;max-width:90vw;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.5);">
+      <input id="cmdk-input" placeholder="Search commands... (CMD+K)" autocomplete="off"
+        style="width:100%;padding:16px;background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--text-primary);font-size:16px;outline:none;">
+      <ul id="cmdk-list"></ul>
+    </div>
+  </div>
+
+  <!-- Daily Briefing Modal -->
+  <div id="briefing-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9998;align-items:center;justify-content:center;">
+    <div style="border-radius:12px;width:600px;max-width:90vw;max-height:85vh;overflow-y:auto;padding:28px;">
+      <h2 style="margin-bottom:20px;">📋 Daily Briefing Preview</h2>
+      <div style="display:grid;gap:16px;">
+        <div><strong style="color:var(--text-secondary);font-size:12px;text-transform:uppercase;">Weather</strong>
+          <p id="briefing-weather" style="margin-top:4px;">Loading...</p></div>
+        <div><strong style="color:var(--text-secondary);font-size:12px;text-transform:uppercase;">Today's Classes</strong>
+          <div id="briefing-classes" style="margin-top:4px;">Loading...</div></div>
+        <div><strong style="color:var(--text-secondary);font-size:12px;text-transform:uppercase;">Due Today</strong>
+          <div id="briefing-assignments" style="margin-top:4px;">Loading...</div></div>
+        <div><strong style="color:var(--text-secondary);font-size:12px;text-transform:uppercase;">Song of the Day</strong>
+          <p id="briefing-song" style="margin-top:4px;">Loading...</p></div>
+        <div><strong style="color:var(--text-secondary);font-size:12px;text-transform:uppercase;">Verse of the Day</strong>
+          <p id="briefing-verse" style="margin-top:4px;">Loading...</p></div>
+      </div>
+      <div id="briefing-content"></div>
+      <div style="display:flex;gap:12px;margin-top:24px;">
+        <button class="btn" onclick="sendBriefingNow()">📤 Send Now</button>
+        <button class="btn btn-secondary" onclick="closeBriefingModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="theme.js"></script>
+  <script src="api-client.js"></script>
+  <script src="command-palette.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      refreshAll();
+      setInterval(refreshAll, 30000);
+    });
+  </script>
+</body>
+</html>

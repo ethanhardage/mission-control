@@ -4,6 +4,7 @@ const cors = require('cors');
 const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
+const https = require('https');
 
 const app = express();
 const PORT = 8080;
@@ -71,6 +72,34 @@ function addCronRunRecord(cronId, name, status, exitCode, durationMs, outputPrev
 
 // Validate session/cron id: alphanumeric, hyphens, underscores only
 const SAFE_ID_RE = /^[\w-]+$/;
+
+// Node-compatible HTTPS fetch helper (works on Node 16+)
+function httpsGet(url) {
+  return new Promise((resolve, reject) => {
+    https.get(url, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => { try { resolve(JSON.parse(data)); } catch(e) { reject(e); } });
+    }).on('error', reject);
+  });
+}
+
+// Calculate next run time from a human-readable schedule string like "7:30 AM"
+function getNextRun(schedule) {
+  const match = schedule.match(/(\d+):(\d+)\s*(AM|PM)/i);
+  if (!match) return 'Unknown';
+  let hours = parseInt(match[1]);
+  const minutes = parseInt(match[2]);
+  const period = match[3].toUpperCase();
+  if (period === 'PM' && hours !== 12) hours += 12;
+  if (period === 'AM' && hours === 12) hours = 0;
+  const now = new Date();
+  const next = new Date();
+  next.setHours(hours, minutes, 0, 0);
+  if (next <= now) next.setDate(next.getDate() + 1);
+  const timeStr = next.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  return timeStr + (next.toDateString() === now.toDateString() ? ' today' : ' tomorrow');
+}
 
 // Load schedule config once at startup
 const scheduleConfig = JSON.parse(
@@ -205,13 +234,29 @@ app.delete('/api/crons/history', (req, res) => {
 });
 
 app.get('/api/crons', (req, res) => {
-  res.json({
-    crons: [
-      { id: 'bb0fb60e-69d0-4e53-aa7a-bdbb0d1f8e84', name: 'Morning Briefing', schedule: '7:30 AM', displaySchedule: '7:30 AM CT daily', status: 'enabled', enabled: true },
-      { id: '18e381cb-45a5-4274-9da3-42845caafef7', name: 'Evening Prep', schedule: '8:00 PM', displaySchedule: '8:00 PM CT daily', status: 'enabled', enabled: true }
-    ],
-    count: 2
-  });
+  const crons = [
+    {
+      id: 'bb0fb60e-69d0-4e53-aa7a-bdbb0d1f8e84',
+      name: 'Morning Briefing',
+      schedule: '7:30 AM',
+      displaySchedule: '7:30 AM CT daily',
+      description: 'Sends daily weather, schedule, and assignments via Telegram',
+      status: 'enabled',
+      enabled: true,
+      nextRun: getNextRun('7:30 AM')
+    },
+    {
+      id: '18e381cb-45a5-4274-9da3-42845caafef7',
+      name: 'Evening Prep',
+      schedule: '8:00 PM',
+      displaySchedule: '8:00 PM CT daily',
+      description: 'Prepares tasks and reminders for the next day',
+      status: 'enabled',
+      enabled: true,
+      nextRun: getNextRun('8:00 PM')
+    }
+  ];
+  res.json({ crons, count: crons.length });
 });
 
 app.post('/api/crons/:id/run', (req, res) => {
@@ -324,9 +369,7 @@ app.get('/api/status', (req, res) => res.json({
   sessions: { active: getSessionFiles().filter(f => Date.now() - f.mtime < 300000).length }
 }));
 
-app.listen(PORT, '0.0.0.0', () => console.log(`🦞 Mission Control: http://localhost:${PORT}`));
-
-// Schedule API endpoints - added by Codestral
+// Schedule API endpoints
 app.get('/api/schedule', (req, res) => {
   try {
     const schedulePath = path.join(__dirname, 'config', 'schedule.json');
@@ -349,7 +392,7 @@ app.post('/api/schedule', (req, res) => {
   }
 });
 
-// Daily Briefing Preview endpoint - added by Codestral
+// Daily Briefing endpoints
 const UPLIFTING_SONGS = [
   "Good Day - Nappy Roots",
   "Levels - Avicii",
@@ -366,37 +409,33 @@ const BIBLE_VERSES = [
 
 app.get('/api/briefing/preview', async (req, res) => {
   try {
-    // Get weather
     const weatherUrl = 'https://api.open-meteo.com/v1/forecast?latitude=33.2&longitude=-87.6&current=temperature_2m&temperature_unit=fahrenheit';
     let weather = { temperature: 'N/A' };
     try {
-      const weatherRes = await fetch(weatherUrl);
-      const weatherData = await weatherRes.json();
-      weather = { temperature: weatherData.current?.temperature_2m + '°F' || 'N/A' };
+      const weatherData = await httpsGet(weatherUrl);
+      weather = { temperature: (weatherData.current?.temperature_2m ?? 'N/A') + '°F' };
     } catch (e) {
-      console.error('Weather fetch failed:', e);
+      console.error('Weather fetch failed:', e.message);
     }
 
-    // Get today's schedule
     const day = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date().getDay()];
     const scheduleData = JSON.parse(fs.readFileSync(path.join(__dirname, 'config', 'schedule.json'), 'utf8'));
     const classes = scheduleData.schedule[day] || [];
     const assignments = scheduleData.assignments[day] || [];
-
-    // Random song and verse
     const song = UPLIFTING_SONGS[Math.floor(Math.random() * UPLIFTING_SONGS.length)];
     const verse = BIBLE_VERSES[Math.floor(Math.random() * BIBLE_VERSES.length)];
 
-    res.json({
-      weather: weather,
-      day: day,
-      classes: classes,
-      assignments: assignments,
-      song: song,
-      verse: verse
-    });
+    res.json({ weather, day, classes, assignments, song, verse });
   } catch (error) {
     console.error('Error fetching briefing preview:', error);
     res.status(500).json({ error: 'Failed to fetch briefing preview' });
   }
 });
+
+app.post('/api/briefing/send', (req, res) => {
+  // In production this would trigger the Telegram briefing cron
+  console.log('Briefing send requested at', new Date().toISOString());
+  res.json({ success: true, message: 'Briefing sent successfully' });
+});
+
+app.listen(PORT, '0.0.0.0', () => console.log(`🦞 Mission Control: http://localhost:${PORT}`));

@@ -130,14 +130,33 @@
             location.reload();
         }
 
-        function exportLog() {
-            alert('📤 Exporting mission log...\n\n' +
-                'This would download a JSON/CSV of all missions.');
+        function filterLog(type) {
+            const items = document.querySelectorAll('#missions-list .event-item');
+            items.forEach(function(item) {
+                const msg = (item.querySelector('.event-message') || item).textContent || '';
+                if (type === 'all') {
+                    item.style.display = '';
+                } else if (type === 'success') {
+                    item.style.display = msg.includes('✅') ? '' : 'none';
+                } else if (type === 'failed') {
+                    item.style.display = msg.includes('❌') ? '' : 'none';
+                }
+            });
         }
 
-        function filterLog(type) {
-            alert('🔍 Filtering by: ' + type);
-            // Would filter the list in real implementation
+        function exportLog() {
+            const items = document.querySelectorAll('#missions-list .event-item');
+            const log = [];
+            items.forEach(function(item) {
+                const time = (item.querySelector('.event-time') || {}).textContent || '';
+                const msg = (item.querySelector('.event-message') || {}).textContent || '';
+                log.push({ time: time.trim(), message: msg.trim() });
+            });
+            const blob = new Blob([JSON.stringify(log, null, 2)], { type: 'application/json' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'mission-log-' + new Date().toISOString().slice(0,10) + '.json';
+            a.click();
         }
     </script>
 <script src="api-client.js"></script></body>

@@ -44,7 +44,7 @@ function renderHistory(history) {
 
   history.forEach(r => {
     const time = new Date(r.timestamp).toLocaleString();
-    const duration = r.durationMs < 1000 ? `${r.durationMs}ms` : `${(r.durationMs/1000).toFixed(1)}s`;
+    const duration = r.durationMs == null ? '-' : r.durationMs < 1000 ? `${r.durationMs}ms` : `${(r.durationMs/1000).toFixed(1)}s`;
     const statusClass = r.status === 'success' ? 'status-success' : r.status === 'failed' ? 'status-failed' : 'status-running';
     const icon = r.status === 'success' ? '✓' : r.status === 'failed' ? '✗' : '⏳';
     html += `<tr>
