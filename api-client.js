@@ -327,6 +327,10 @@ async function loadCrons() {
       </div>
     </div>
   `).join('');
+  } catch (err) {
+    console.error("Failed to load crons:", err);
+    if (container) container.innerHTML = "<p class=placeholder>Failed to load crons</p>";
+  }
 }
 
 function viewCronLogs(id) {
