@@ -1,17 +1,73 @@
 /* Croati Mission Control Styles */
+
+/* CSS Variables - Dark theme (default) */
 :root {
+  /* Core backgrounds */
   --bg-primary: #0d1117;
   --bg-secondary: #161b22;
   --bg-tertiary: #21262d;
+  --card-bg: #161b22;
+  
+  /* Text colors */
   --text-primary: #e6edf3;
   --text-secondary: #8b949e;
-  --accent-orange: #FF4500;
-  --accent-orange-hover: #ff5722;
+  
+  /* Accent colors (keep orange) */
+  --accent-orange: #ff6b00;
+  --accent-orange-hover: #ff8533;
+  
+  /* Semantic colors */
   --success: #238636;
   --warning: #d29922;
   --danger: #da3633;
   --info: #58a6ff;
+  
+  /* Borders */
   --border: #30363d;
+  
+  /* Today card gradient */
+  --today-gradient-start: #1a1a2e;
+  --today-gradient-end: #16213e;
+  
+  /* Assignment backgrounds */
+  --assignment-done-bg: rgba(34,197,94,0.1);
+  --assignment-in-progress-bg: rgba(59,130,246,0.1);
+  --assignment-default-bg: rgba(255,0,0,0.1);
+}
+
+/* Light theme overrides */
+[data-theme="light"] {
+  /* Core backgrounds */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f6f8fa;
+  --bg-tertiary: #e1e4e8;
+  --card-bg: #ffffff;
+  
+  /* Text colors */
+  --text-primary: #1f2328;
+  --text-secondary: #656d76;
+  
+  /* Accent colors (keep orange) */
+  --accent-orange: #ff6b00;
+  --accent-orange-hover: #e55a00;
+  
+  /* Semantic colors */
+  --success: #2ea043;
+  --warning: #9e8c4c;
+  --danger: #cf222e;
+  --info: #4493d6;
+  
+  /* Borders */
+  --border: #d0d7de;
+  
+  /* Today card gradient */
+  --today-gradient-start: #fff5eb;
+  --today-gradient-end: #ffecd9;
+  
+  /* Assignment backgrounds */
+  --assignment-done-bg: rgba(34,197,94,0.15);
+  --assignment-in-progress-bg: rgba(59,130,246,0.15);
+  --assignment-default-bg: rgba(239,68,68,0.1);
 }
 
 * {
