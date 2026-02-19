@@ -152,3 +152,85 @@ if (document.readyState === 'loading') {
 } else {
   refreshAll();
 }
+
+// Daily Briefing Preview Modal Functions
+function openBriefingModal() {
+  const modal = document.getElementById('briefing-modal');
+  if (modal) {
+    modal.style.display = 'flex';
+    loadBriefingPreview();
+  }
+}
+
+function closeBriefingModal() {
+  const modal = document.getElementById('briefing-modal');
+  if (modal) {
+    modal.style.display = 'none';
+  }
+}
+
+async function loadBriefingPreview() {
+  document.getElementById('briefing-weather').textContent = 'Loading...';
+  document.getElementById('briefing-classes').innerHTML = 'Loading...';
+  document.getElementById('briefing-assignments').innerHTML = 'Loading...';
+  document.getElementById('briefing-song').textContent = 'Loading...';
+  document.getElementById('briefing-verse').textContent = 'Loading...';
+  
+  try {
+    const data = await apiCall('/briefing/preview');
+    
+    // Weather
+    document.getElementById('briefing-weather').textContent = 
+      'Temperature: ' + (data.weather?.temperature || 'N/A');
+    
+    // Classes
+    if (data.classes?.length) {
+      let html = '';
+      for (const c of data.classes) {
+        html += '<div style="margin:8px 0;padding:8px;background:rgba(255,107,0,0.1);border-radius:4px;">';
+        html += '<strong>' + c.class + '</strong> - ' + c.time;
+        html += '</div>';
+      }
+      document.getElementById('briefing-classes').innerHTML = html;
+    } else {
+      document.getElementById('briefing-classes').innerHTML = '<p style="color:#888">No classes today</p>';
+    }
+    
+    // Assignments
+    if (data.assignments?.length) {
+      let html = '';
+      for (const a of data.assignments) {
+        const urgent = a.urgent ? '<span style="color:#ef4444"> ⚠️ URGENT</span>' : '';
+        html += '<div style="margin:8px 0;padding:8px;background:rgba(239,68,68,0.1);border-radius:4px;">';
+        html += escapeHtml(a.task) + urgent;
+        html += '</div>';
+      }
+      document.getElementById('briefing-assignments').innerHTML = html;
+    } else {
+      document.getElementById('briefing-assignments').innerHTML = '<p style="color:#888">No assignments due</p>';
+    }
+    
+    // Song
+    document.getElementById('briefing-song').textContent = data.song || 'None selected';
+    
+    // Verse
+    const verse = data.verse || {};
+    document.getElementById('briefing-verse').textContent = 
+      verse.reference ? verse.reference + ' - "' + verse.text + '"' : 'None selected';
+    
+  } catch (err) {
+    console.error('Failed to load briefing:', err);
+    document.getElementById('briefing-content').innerHTML = '<p style="color:#ef4444">Failed to load briefing preview</p>';
+  }
+}
+
+async function sendBriefingNow() {
+  showToast('Sending briefing...', 'info');
+  try {
+    await apiCall('/briefing/send', { method: 'POST' });
+    showToast('✅ Briefing sent!', 'success');
+    closeBriefingModal();
+  } catch (err) {
+    showToast('❌ Failed to send', 'error');
+  }
+}

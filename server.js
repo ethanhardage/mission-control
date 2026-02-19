@@ -325,3 +325,78 @@ app.get('/api/status', (req, res) => res.json({
 }));
 
 app.listen(PORT, '0.0.0.0', () => console.log(`🦞 Mission Control: http://localhost:${PORT}`));
+
+// Schedule API endpoints - added by Codestral
+app.get('/api/schedule', (req, res) => {
+  try {
+    const schedulePath = path.join(__dirname, 'config', 'schedule.json');
+    const scheduleData = fs.readFileSync(schedulePath, 'utf8');
+    res.json(JSON.parse(scheduleData));
+  } catch (error) {
+    console.error('Error reading schedule:', error);
+    res.status(500).json({ error: 'Failed to read schedule' });
+  }
+});
+
+app.post('/api/schedule', (req, res) => {
+  try {
+    const schedulePath = path.join(__dirname, 'config', 'schedule.json');
+    fs.writeFileSync(schedulePath, JSON.stringify(req.body, null, 2));
+    res.json({ success: true, message: 'Schedule updated' });
+  } catch (error) {
+    console.error('Error updating schedule:', error);
+    res.status(500).json({ error: 'Failed to update schedule' });
+  }
+});
+
+// Daily Briefing Preview endpoint - added by Codestral
+const UPLIFTING_SONGS = [
+  "Good Day - Nappy Roots",
+  "Levels - Avicii",
+  "Don't Stop Believin' - Journey",
+  "Eye of the Tiger - Survivor",
+  "Stronger - Kanye West"
+];
+
+const BIBLE_VERSES = [
+  { reference: "Philippians 4:13", text: "I can do all things through Christ who strengthens me." },
+  { reference: "Jeremiah 29:11", text: "For I know the plans I have for you, declares the Lord." },
+  { reference: "Psalm 23:1", text: "The Lord is my shepherd; I shall not want." }
+];
+
+app.get('/api/briefing/preview', async (req, res) => {
+  try {
+    // Get weather
+    const weatherUrl = 'https://api.open-meteo.com/v1/forecast?latitude=33.2&longitude=-87.6&current=temperature_2m&temperature_unit=fahrenheit';
+    let weather = { temperature: 'N/A' };
+    try {
+      const weatherRes = await fetch(weatherUrl);
+      const weatherData = await weatherRes.json();
+      weather = { temperature: weatherData.current?.temperature_2m + '°F' || 'N/A' };
+    } catch (e) {
+      console.error('Weather fetch failed:', e);
+    }
+
+    // Get today's schedule
+    const day = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date().getDay()];
+    const scheduleData = JSON.parse(fs.readFileSync(path.join(__dirname, 'config', 'schedule.json'), 'utf8'));
+    const classes = scheduleData.schedule[day] || [];
+    const assignments = scheduleData.assignments[day] || [];
+
+    // Random song and verse
+    const song = UPLIFTING_SONGS[Math.floor(Math.random() * UPLIFTING_SONGS.length)];
+    const verse = BIBLE_VERSES[Math.floor(Math.random() * BIBLE_VERSES.length)];
+
+    res.json({
+      weather: weather,
+      day: day,
+      classes: classes,
+      assignments: assignments,
+      song: song,
+      verse: verse
+    });
+  } catch (error) {
+    console.error('Error fetching briefing preview:', error);
+    res.status(500).json({ error: 'Failed to fetch briefing preview' });
+  }
+});

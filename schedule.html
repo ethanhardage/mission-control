@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Class Schedule | Croati Mission Control</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.schedule-table { width:100%; border-collapse:collapse; margin-top:16px; }
+.schedule-table th { background:#1a1a2e; padding:12px; text-align:left; color:#888; font-size:12px; text-transform:uppercase; border-bottom:2px solid #ff6b00; }
+.schedule-table td { padding:12px; border-bottom:1px solid #333; }
+.schedule-table tr:hover { background:rgba(255,107,0,0.05); }
+.day-header { background:rgba(255,107,0,0.1) !important; }
+.day-header td { color:#ff6b00; font-weight:bold; text-transform:uppercase; }
+.editing input { background:#1a1a2e; border:1px solid #ff6b00; padding:6px 10px; color:#fff; border-radius:4px; width:100%; }
+.btn-sm { padding:6px 12px; font-size:12px; }
+.add-btn { margin:16px 0; }
+.modal-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); display:none; justify-content:center; align-items:center; z-index:1000; }
+.modal-overlay.visible { display:flex; }
+.modal { background:#16213e; padding:24px; border-radius:8px; width:90%; max-width:400px; border:1px solid #333; }
+.modal h3 { margin:0 0 16px 0; color:#ff6b00; }
+.modal input, .modal select { width:100%; padding:10px; margin:8px 0; background:#1a1a2e; border:1px solid #333; color:#fff; border-radius:4px; }
+.modal-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:16px; }
+</style>
+</head>
+<body>
+<header class="header">
+<div class="header-brand">
+<span class="lobster-icon">🦞</span>
+<h1>CROATI MISSION CONTROL</h1>
+<span class="live-badge">LIVE</span>
+</div>
+<div class="header-actions">
+<button class="btn btn-secondary" onclick="refreshAll()">🔄 Refresh</button>
+</div>
+</header>
+<nav class="nav">
+<ul>
+<li><a href="index.html">Dashboard</a></li>
+<li><a href="agents.html">Agents</a></li>
+<li><a href="crons.html">Cron Jobs</a></li>
+<li><a href="missions.html">Mission Log</a></li>
+<li><a href="schedule.html" class="active">Schedule</a></li>
+</ul>
+</nav>
+<main class="dashboard">
+<div class="card section-full">
+<div class="card-header">
+<h2><span>📅</span> CLASS SCHEDULE</h2>
+<button class="btn add-btn" onclick="showAddModal()">+ Add Class</button>
+</div>
+<div class="card-body">
+<table class="schedule-table" id="schedule-table">
+<thead>
+<tr>
+<th>Day</th>
+<th>Time</th>
+<th>Course</th>
+<th>Actions</th>
+</tr>
+</thead>
+<tbody id="schedule-body">
+<tr><td colspan="4"><p class="placeholder">Loading schedule...</p></td></tr>
+</tbody>
+</table>
+</div>
+</div>
+</main>
+
+<div class="modal-overlay" id="add-modal">
+<div class="modal">
+<h3>Add New Class</h3>
+<select id="modal-day">
+<option value="Mon">Monday</option>
+<option value="Tue">Tuesday</option>
+<option value="Wed">Wednesday</option>
+<option value="Thu">Thursday</option>
+<option value="Fri">Friday</option>
+</select>
+<input type="text" id="modal-time" placeholder="Time (e.g., 9:30-10:45)">
+<input type="text" id="modal-course" placeholder="Course name">
+<input type="text" id="modal-location" placeholder="Location (optional)">
+<div class="modal-actions">
+<button class="btn btn-secondary" onclick="hideAddModal()">Cancel</button>
+<button class="btn" onclick="saveNewClass()">Save</button>
+</div>
+</div>
+</div>
+
+<script src="schedule.js"></script>
+</body>
+</html>
